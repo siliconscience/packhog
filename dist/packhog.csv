@@ -1,0 +1,124 @@
+Category,Item,Image
+all,sunglasses,png/002-sunglasses.png
+all,windbreaker or raincoat,png/003-windbreaker.png
+all,map of destination,png/004-treasure-map.png
+all,weather at destination,png/005-meteorology.png
+all,bars,png/006-bar.png
+all,trail mix,png/007-trail-mix.png
+all,chocolate,png/012-chocolate-bar.png
+all,sandwich,png/008-sandwich.png
+all,water bottle,png/009-water.png
+all,sun hat,png/010-hat.png
+all,headlamp,png/011-headlamp.png
+all,headlamp batteries,png/001-energy.png
+
+base,short sleeve,png/013-tshirt.png
+base,long sleeve,png/014-shirt.png
+base,long johns,png/015-leggings.png
+base,sock liner,png/017-socks-1.png
+base,hiking sock,png/028-socks-2.png
+base,underwear,png/018-underwear.png
+
+cold sport,heavy longsleeve,png/019-half-zip.png
+cold sport,pile jacket,png/020-jacket.png
+cold sport,wool hat,png/022-beanie.png
+cold sport,thermos,png/023-thermos.png
+cold sport,water bottle cozy
+cold sport,outer mitts,png/024-mittens.png
+cold sport,gloves,png/025-gloves.png
+cold sport,glove liners
+cold sport,vapor barrier gloves,png/026-gloves-1.png
+cold sport,head band,png/027-scarf.png
+cold sport,down jacket,png/021-down.png
+
+hot sport,bandana,png/030-bandana.png
+hot sport,flip flops,png/031-flip-flops.png
+hot sport,swimsuit,png/032-swimming-suit.png
+hot sport,beach towel,png/033-towel.png
+
+rock climbing,rock slippers,png/034-shoes.png
+rock climbing,harness,png/035-harness.png
+rock climbing,rock helmet,png/036-helmet.png
+rock climbing,rope,png/037-rope.png
+rock climbing,png/static ropes,png/038-rope-1.png
+rock climbing,cordelette,png/095-knot.png
+rock climbing,quad,png/099-yumminky.png
+rock climbing,locking biners,png/039-carabiner.png
+rock climbing,quickdraws,png/041-quickdraw-1.png
+rock climbing,lead gear,png/042-spring-loaded-camming-device.png
+rock climbing,approach shoes,png/043-sneakers.png
+
+ice climbing,ice axes,png/096-ice-axe.png
+ice climbing,ice screws,png/097-ice-screw.png
+ice climbing,screw racks
+ice climbing,screw cleaner,brush.png
+ice climbing,crampons,png/083-crampons-1.png
+ice climbing,gaiters,gaiter.png
+
+overnight evening,jeans,png/044-jeans.png
+overnight evening,tshirt,png/045-cotton-polo-shirt.png
+overnight evening,socks,png/046-clothes.png
+
+overnight bath,contact lens case,png/047-contact-lens.png
+overnight bath,contact lens solution,png/048-solution.png
+overnight bath,medications,png/098-medicine.png
+overnight bath,razor,png/049-razor.png
+overnight bath,shave cream,png/050-shaving.png
+overnight bath,toothbrush,png/051-toothbrush.png
+overnight bath,toothpaste,png/052-toothpaste.png
+
+overnight bed,pajamas,png/053-pajamas.png
+overnight bed,hut slippers,png/054-clogs.png
+
+overnight electronics,headphone,png/057-earpiece.png
+overnight electronics,phone charger,png/058-phone-charger.png
+overnight electronics,plug multiplex,png/060-power-strip.png
+overnight electronics,usb multiplex,png/059-usb-hub.png
+overnight electronics,phone battery,png/061-power-bank.png
+overnight electronics,tablet,png/055-ipad.png
+
+overnight food,mini kettle,png/062-kettle.png
+overnight food,coffee filter,png/063-cone.png
+overnight food,filters,png/064-coffee-filter.png
+overnight food,coffee,png/065-canned.png
+overnight food,hard boiled eggs,png/066-boiled-egg.png
+overnight food,bagels,png/067-bagel.png
+overnight food,freeze-dried
+overnight food,leftovers,png/068-leftovers.png
+overnight food,utensils bag,png/069-cutlery.png
+overnight food,teabags,png/070-teabag.png
+overnight food,oatmeal,png/071-cereal.png
+overnight food,raisins & nuts,png/072-grapes.png
+
+overnight foreign,euro plugs,png/073-socket.png
+overnight foreign,euro chargers
+overnight foreign,passport,png/074-passport.png
+
+skiing,ski boots,png/075-ski-boots.png
+skiing,skis,png/076-winter-s.png
+skiing,ski poles,poles.png
+skiing,skins,png/077-strip.png
+skiing,ski scraper,png/078-tool.png
+skiing,wax,png/079-waxing.png
+skiing,gaiters,gaiter.png
+
+hiking,boots,png/080-shoes-1.png
+hiking,microspikes,png/082-cleats.png
+hiking,trail crampons,png/083-crampons-1.png
+hiking,crampons,png/081-crampons.png
+hiking,gaiters,gaiter.png
+hiking,poles,poles.png
+
+
+camping,tent,png/094-tent.png
+camping,ground sheet,png/085-tarp-1.png
+camping,sleeping pad(s),png/086-sleeping-mat.png
+camping,sleeping bag,png/087-sleeping-bag.png
+camping,stakes,png/088-stakes.png
+camping,spade,png/089-shovel.png
+camping,stove,png/090-camping-gas.png
+camping,cook pot,png/091-cooking-pot.png
+camping,cups,png/092-drink.png
+camping,spork,png/093-spork.png
+
+

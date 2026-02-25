@@ -51,9 +51,9 @@ rock climbing,approach shoes,png/043-sneakers.png
 ice climbing,ice axes,png/096-ice-axe.png
 ice climbing,ice screws,png/097-ice-screw.png
 ice climbing,screw racks
-ice climbing,screw cleaner,brush.png
+ice climbing,screw cleaner,mypng/brush.png
 ice climbing,crampons,png/083-crampons-1.png
-ice climbing,gaiters,gaiter.png
+ice climbing,gaiters,mypng/gaiter.png
 
 overnight evening,jeans,png/044-jeans.png
 overnight evening,tshirt,png/045-cotton-polo-shirt.png
@@ -96,18 +96,18 @@ overnight foreign,passport,png/074-passport.png
 
 skiing,ski boots,png/075-ski-boots.png
 skiing,skis,png/076-winter-s.png
-skiing,ski poles,poles.png
+skiing,ski poles,mypng/poles.png
 skiing,skins,png/077-strip.png
 skiing,ski scraper,png/078-tool.png
 skiing,wax,png/079-waxing.png
-skiing,gaiters,gaiter.png
+skiing,gaiters,mypng/gaiter.png
 
 hiking,boots,png/080-shoes-1.png
 hiking,microspikes,png/082-cleats.png
 hiking,trail crampons,png/083-crampons-1.png
 hiking,crampons,png/081-crampons.png
-hiking,gaiters,gaiter.png
-hiking,poles,poles.png
+hiking,gaiters,mypng/gaiter.png
+hiking,poles,mypng/poles.png
 
 
 camping,tent,png/094-tent.png

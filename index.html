@@ -21,9 +21,8 @@
             margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
             color: var(--primary);
+            padding-bottom: 80px;
         }
-
-        h1 { margin-bottom: 20px; }
 
         .config-panel {
             background: white; padding: 15px 25px; border-radius: 12px;
@@ -40,19 +39,16 @@
         .toggle-row label { cursor: pointer; display: flex; align-items: center; gap: 5px; }
 
         .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 20px; }
-        
         .tab-btn {
             padding: 10px 18px; cursor: pointer; border: none;
             background: #dcdde1; border-radius: 20px; font-weight: 600;
-            transition: all 0.2s;
         }
-
         .tab-btn.active { background: var(--primary); color: white; }
 
         .controls { margin-bottom: 20px; }
         .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin: 0 5px; color: white; }
         .check-all { background: var(--accent); }
-        .clear-all { background: var(--danger); }
+        .reset-btn { background: #7f8c8d; }
 
         #content-area { width: 100%; max-width: 800px; min-height: 300px; }
         .packing-page { display: none; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
@@ -61,10 +57,8 @@
         .item-card {
             background: var(--card-bg); padding: 12px; border-radius: 10px;
             text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-            transition: opacity 0.4s ease, transform 0.4s ease;
         }
-
-        .item-card.hidden { opacity: 0; transform: scale(0.85); pointer-events: none; }
+        .item-card.hidden { display: none !important; }
 
         .img-container {
             width: 100%; height: 110px; background: #f8f9fa;
@@ -72,9 +66,13 @@
             display: flex; align-items: center; justify-content: center;
             overflow: hidden; border: 1px solid #eee;
         }
-
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
-        .coming-soon { font-size: 11px; color: #95a5a6; text-transform: uppercase; font-weight: bold; }
+
+        #undo-btn {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 10px 20px; border-radius: 30px;
+            border: none; cursor: pointer; font-weight: bold; display: none; z-index: 100;
+        }
 
         #summary-stats { width: 100%; max-width: 800px; margin-top: 30px; }
     </style>
@@ -95,18 +93,20 @@
         <div id="tabs-container" class="tabs"></div>
 
         <div class="controls">
-            <button class="btn check-all" onclick="toggleAll(true)">Check All</button>
-            <button class="btn clear-all" onclick="toggleAll(false)">Reset Page</button>
+            <button class="btn check-all" onclick="toggleAll(true)">Pack All on Page</button>
+            <button class="btn reset-btn" onclick="clearProgress()">Reset All Progress</button>
         </div>
     </div>
 
     <div id="content-area"></div>
     <div id="summary-stats"></div>
+    <button id="undo-btn" onclick="undoLast()">↺ Undo Last Item</button>
 
     <script>
         let gearData = [];
+        let lastPacked = null;
+        const STORAGE_KEY = 'packhog_packed_list';
 
-        // 1. Fetch Data (Original Logic)
         Papa.parse("dist/packhog.csv?v=" + Date.now(), {
             download: true,
             header: false, 
@@ -119,104 +119,95 @@
                     name: row[1] ? row[1].trim() : "Unknown Item",
                     image: row[2] ? row[2].trim() : ""
                 })).filter(item => item.category !== "");
-
                 initApp(); 
             }
         });
 
-        // 2. Build UI with Filtering
+        function getPacked() { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        
+        function setPacked(name, isPacked) {
+            let packed = getPacked();
+            if (isPacked) { if (!packed.includes(name)) packed.push(name); }
+            else { packed = packed.filter(n => n !== name); }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(packed));
+        }
+
         function initApp() {
             const isOvernight = document.getElementById('overnight-check').checked;
-            const tabsContainer = document.getElementById('tabs-container');
-            const contentArea = document.getElementById('content-area');
-            
-            // Get which activities are checked
             const activeActivities = Array.from(document.querySelectorAll('.activity-filter:checked')).map(cb => cb.value.toLowerCase());
+            const packedList = getPacked();
 
             let categories = [...new Set(gearData.map(item => item.category))];
-
-            // FILTER LOGIC
             categories = categories.filter(cat => {
                 const lowCat = cat.toLowerCase();
-                
-                // If it's an overnight category, hide it if overnight isn't checked
                 if (lowCat.includes('overnight') && !isOvernight) return false;
-
-                // Check if category name matches "Skiing", "Ice Climbing", etc.
-                const isHikingCat = lowCat.includes('hiking');
-                const isSkiingCat = lowCat.includes('skiing');
-                const isRockCat = lowCat.includes('rock climbing');
-                const isIceCat = lowCat.includes('ice climbing');
-
-                // If it's a specific activity category, only show if that activity is checked
-                if (isHikingCat && !activeActivities.includes('hiking')) return false;
-                if (isSkiingCat && !activeActivities.includes('skiing')) return false;
-                if (isRockCat && !activeActivities.includes('rock climbing')) return false;
-                if (isIceCat && !activeActivities.includes('ice climbing')) return false;
-
-                return true; // Show everything else (Base, Hot Sport, etc.)
+                const activityKeywords = ['hiking', 'skiing', 'rock climbing', 'ice climbing'];
+                const matchesAnyActivity = activityKeywords.some(kw => lowCat.includes(kw));
+                if (matchesAnyActivity) {
+                    return activeActivities.some(act => lowCat.includes(act));
+                }
+                return true; 
             });
 
-            tabsContainer.innerHTML = '';
-            contentArea.innerHTML = '';
+            document.getElementById('tabs-container').innerHTML = '';
+            document.getElementById('content-area').innerHTML = '';
 
             categories.forEach((cat, index) => {
                 const safeId = "page-" + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-
                 const btn = document.createElement('button');
                 btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
                 btn.innerText = cat;
                 btn.onclick = (e) => showPage(cat, e.target);
-                tabsContainer.appendChild(btn);
+                document.getElementById('tabs-container').appendChild(btn);
 
                 const page = document.createElement('div');
                 page.id = safeId;
                 page.className = `packing-page ${index === 0 ? 'active' : ''}`;
                 
-                const items = gearData.filter(i => i.category === cat);
-                items.forEach(item => {
+                gearData.filter(i => i.category === cat).forEach(item => {
+                    const isPacked = packedList.includes(item.name);
                     const imgPath = item.image ? `dist/${item.image}` : null;
-                    const imgHTML = imgPath 
-                        ? `<img src="${imgPath}" alt="${item.name}" onerror="this.parentElement.innerHTML='<span class=\'coming-soon\'>Image Missing</span>'">`
-                        : `<span class="coming-soon">No Photo</span>`;
+                    const imgHTML = imgPath ? `<img src="${imgPath}" onerror="this.parentElement.innerHTML='Image Missing'">` : `No Photo`;
 
                     page.innerHTML += `
-                        <div class="item-card">
+                        <div class="item-card ${isPacked ? 'hidden' : ''}">
                             <div class="img-container">${imgHTML}</div>
-                            <label>
-                                <input type="checkbox" class="gear-checkbox" onchange="handleCheck(this)"> 
-                                ${item.name}
-                            </label>
+                            <label><input type="checkbox" class="gear-checkbox" ${isPacked ? 'checked' : ''} onchange="handleCheck(this, '${item.name.replace(/'/g, "\\'")}')"> ${item.name}</label>
                         </div>`;
                 });
-                contentArea.appendChild(page);
+                document.getElementById('content-area').appendChild(page);
             });
             updateSummary();
         }
 
-        function handleCheck(checkbox) {
-            checkbox.closest('.item-card').classList.toggle('hidden', checkbox.checked);
+        function handleCheck(cb, name) {
+            setPacked(name, cb.checked);
+            if (cb.checked) {
+                lastPacked = name;
+                document.getElementById('undo-btn').style.display = 'block';
+                cb.closest('.item-card').classList.add('hidden');
+            }
             updateSummary();
         }
 
-        function updateSummary() {
-            const allCheckboxes = document.querySelectorAll('.gear-checkbox');
-            const total = allCheckboxes.length;
-            const checked = Array.from(allCheckboxes).filter(i => i.checked).length;
-            const remaining = total - checked;
-
-            const summaryDiv = document.getElementById('summary-stats');
-            if (summaryDiv) {
-                summaryDiv.innerHTML = `
-                    <div style="padding:20px; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); text-align:center;">
-                        <h3 style="margin:0;">${remaining} Items Remaining</h3>
-                        <div style="background:#eee; height:12px; border-radius:6px; margin:15px 0; overflow:hidden;">
-                            <div style="background:var(--accent); height:100%; width:${(checked/total || 0)*100}%; transition: width 0.4s ease;"></div>
-                        </div>
-                        <p style="margin:0; font-size:0.9rem; color:#666;">Packed ${checked} of ${total} items</p>
-                    </div>
-                `;
+        function undoLast() {
+            if (lastPacked) {
+                setPacked(lastPacked, false);
+                lastPacked = null;
+                document.getElementById('undo-btn').style.display = 'none';
+                initApp();
             }
+        }
+
+        function updateSummary() {
+            const total = gearData.length;
+            const packedCount = getPacked().length;
+            const remaining = total - packedCount;
+            document.getElementById('summary-stats').innerHTML = `
+                <div style="padding:20px; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); text-align:center;">
+                    <h3 style="margin:0;">${remaining} Items Remaining</h3>
+                    <p style="margin:5px 0 0 0; color:#666;">Total Packed: ${packedCount} / ${total}</p>
+                </div>`;
         }
 
         function showPage(cat, btn) {
@@ -224,18 +215,24 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
             document.querySelectorAll('.packing-page').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById(safeId);
-            if (targetPage) targetPage.classList.add('active');
+            document.getElementById(safeId).classList.add('active');
         }
 
         function toggleAll(check) {
             const activePage = document.querySelector('.packing-page.active');
             if (!activePage) return;
-            activePage.querySelectorAll('.gear-checkbox').forEach(i => {
-                i.checked = check;
-                i.closest('.item-card').classList.toggle('hidden', check);
+            activePage.querySelectorAll('.gear-checkbox').forEach(cb => {
+                const name = cb.parentElement.innerText.trim();
+                cb.checked = check;
+                handleCheck(cb, name);
             });
-            updateSummary();
+        }
+
+        function clearProgress() {
+            if(confirm("Clear all packed items?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                initApp();
+            }
         }
     </script>
 </body>

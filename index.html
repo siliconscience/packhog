@@ -18,136 +18,76 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
             color: var(--primary);
+            padding-bottom: 100px; /* Space for the Undo bar */
         }
 
-        h1 { margin-bottom: 20px; }
-
-        /* Configuration Section */
         .config-panel {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            max-width: 800px;
-            align-items: center;
+            background: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px;
+            display: flex; flex-direction: column; gap: 15px;
+            width: 100%; max-width: 800px; align-items: center;
         }
 
-        .overnight-toggle label {
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .preset-group {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 15px; padding: 10px; border-bottom: 1px solid #eee; width: 100%;
         }
 
-        /* Tabs Navigation */
-        .tabs { 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 8px; 
-            margin-bottom: 20px; 
+        .preset-group label {
+            cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            display: flex; align-items: center; gap: 5px;
+            background: #f8f9fa; padding: 5px 12px; border-radius: 15px;
         }
-        
+
+        .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
         .tab-btn {
-            padding: 10px 18px;
-            cursor: pointer;
-            border: none;
-            background: #dcdde1;
-            border-radius: 20px;
-            font-weight: 600;
-            transition: all 0.2s;
+            padding: 8px 16px; cursor: pointer; border: none;
+            background: #dcdde1; border-radius: 20px; font-weight: 600;
         }
+        .tab-btn.active { background: var(--primary); color: white; }
 
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Bulk Action Buttons */
-        .controls { margin-bottom: 20px; }
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 0 5px;
-            color: white;
-        }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; margin: 5px; }
+        .reset-global { background: #7f8c8d; }
         .check-all { background: var(--accent); }
-        .clear-all { background: var(--danger); }
 
-        /* Gear Grid */
-        #content-area { width: 100%; max-width: 800px; min-height: 300px; }
-        .packing-page {
-            display: none;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-        }
+        #content-area { width: 100%; max-width: 800px; min-height: 200px; }
+        .packing-page { display: none; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
         .packing-page.active { display: grid; }
 
-        /* Gear Card */
         .item-card {
-            background: var(--card-bg);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            background: var(--card-bg); padding: 12px; border-radius: 10px;
+            text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         }
-
-        .item-card.hidden {
-            opacity: 0;
-            transform: scale(0.85);
-            pointer-events: none;
-        }
+        .item-card.packed { display: none !important; }
 
         .img-container {
-            width: 100%;
-            height: 110px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: 1px solid #eee;
+            width: 100%; height: 110px; background: #f8f9fa;
+            border-radius: 6px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; border: 1px solid #eee;
+        }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Undo Notification Bar */
+        #undo-bar {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: #333; color: white;
+            padding: 12px 24px; border-radius: 30px;
+            display: none; align-items: center; gap: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
         }
 
-        .img-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        #undo-btn {
+            background: var(--accent); color: white; border: none;
+            padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-weight: bold; text-transform: uppercase; font-size: 0.8rem;
         }
 
-        .coming-soon {
-            font-size: 11px;
-            color: #95a5a6;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        .item-card label {
-            font-size: 14px;
-            cursor: pointer;
-            display: block;
-        }
-
-        /* Summary Stats */
         #summary-stats { width: 100%; max-width: 800px; margin-top: 30px; }
     </style>
 </head>
@@ -156,63 +96,85 @@
     <h1>PackHog List</h1>
 
     <div class="config-panel">
-        <div class="overnight-toggle">
-            <label>
-                <input type="checkbox" id="overnight-check" onchange="initApp()"> 🌙 Include Overnight Gear
-            </label>
+        <div class="preset-group">
+            <label><input type="checkbox" class="activity-toggle" value="hiking" checked onchange="initApp()"> 🥾 Hiking</label>
+            <label><input type="checkbox" class="activity-toggle" value="skiing" onchange="initApp()"> ⛷️ Skiing</label>
+            <label><input type="checkbox" class="activity-toggle" value="rock climbing" onchange="initApp()"> 🧗 Rock</label>
+            <label><input type="checkbox" class="activity-toggle" value="ice climbing" onchange="initApp()"> ⛏️ Ice</label>
+            <label><input type="checkbox" id="overnight-check" onchange="initApp()"> 🌙 Overnight</label>
         </div>
         
         <div id="tabs-container" class="tabs"></div>
 
         <div class="controls">
-            <button class="btn check-all" onclick="toggleAll(true)">Check All</button>
-            <button class="btn clear-all" onclick="toggleAll(false)">Reset Page</button>
+            <button class="btn check-all" onclick="toggleAll(true)">Pack All on Page</button>
+            <button class="btn reset-global" onclick="resetEverything()">Reset All Progress</button>
         </div>
     </div>
 
     <div id="content-area"></div>
-
     <div id="summary-stats"></div>
+
+    <div id="undo-bar">
+        <span id="undo-text">Item packed.</span>
+        <button id="undo-btn" onclick="undoLast()">Undo</button>
+    </div>
 
     <script>
         let gearData = [];
+        let lastPackedItem = null;
+        const STORAGE_KEY = 'packhog_packed_items';
 
-        // 1. Fetch Data
-      Papa.parse("dist/packhog.csv?v=" + Date.now(), {
+        Papa.parse("dist/packhog.csv?v=" + Date.now(), {
             download: true,
             header: false, 
-            skipEmptyLines: true,
             complete: function(results) {
                 const rows = results.data;
                 if (!rows || rows.length < 2) return;
-		console.log("Raw Row 1:", rows[1]);
                 gearData = rows.slice(1).map(row => ({
                     category: row[0] ? row[0].trim() : "Misc",
                     name: row[1] ? row[1].trim() : "Unknown Item",
                     image: row[2] ? row[2].trim() : ""
                 })).filter(item => item.category !== "");
-
                 initApp(); 
             }
         });
 
-        // 2. Build UI
+        function getPackedItems() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        }
+
+        function savePackedStatus(name, isPacked) {
+            let packed = getPackedItems();
+            if (isPacked) {
+                if (!packed.includes(name)) packed.push(name);
+            } else {
+                packed = packed.filter(i => i !== name);
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(packed));
+        }
+
         function initApp() {
-            const isOvernight = document.getElementById('overnight-check').checked;
             const tabsContainer = document.getElementById('tabs-container');
             const contentArea = document.getElementById('content-area');
+            const packedList = getPackedItems();
+            const activeActivities = Array.from(document.querySelectorAll('.activity-toggle:checked')).map(cb => cb.value.toLowerCase());
+            const includeOvernight = document.getElementById('overnight-check').checked;
 
-            let categories = [...new Set(gearData.map(item => item.category))];
-            if (!isOvernight) {
-                categories = categories.filter(cat => !cat.toLowerCase().includes('overnight'));
-            }
+            let allCategories = [...new Set(gearData.map(item => item.category))];
+            let filteredCategories = allCategories.filter(cat => {
+                const lowCat = cat.toLowerCase();
+                if (lowCat.includes('overnight') && !includeOvernight) return false;
+                const matchesActivity = activeActivities.some(act => lowCat.includes(act));
+                const isEssential = lowCat.includes('essential') || lowCat.includes('clothing') || lowCat.includes('misc');
+                return matchesActivity || isEssential;
+            });
 
             tabsContainer.innerHTML = '';
             contentArea.innerHTML = '';
 
-            categories.forEach((cat, index) => {
+            filteredCategories.forEach((cat, index) => {
                 const safeId = "page-" + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-
                 const btn = document.createElement('button');
                 btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
                 btn.innerText = cat;
@@ -224,19 +186,18 @@
                 page.className = `packing-page ${index === 0 ? 'active' : ''}`;
                 
                 const items = gearData.filter(i => i.category === cat);
-//		console.table( gearData)
                 items.forEach(item => {
+                    const isPacked = packedList.includes(item.name);
                     const imgPath = item.image ? `dist/${item.image}` : null;
-
                     const imgHTML = imgPath 
-                        ? `<img src="${imgPath}" alt="${item.name}" onerror="this.parentElement.innerHTML='<span class=\'coming-soon\'>Image Missing</span>'">`
-                        : `<span class="coming-soon">No Photo</span>`;
+                        ? `<img src="${imgPath}" alt="${item.name}" onerror="this.parentElement.innerHTML='No Photo'">`
+                        : `No Photo`;
 
                     page.innerHTML += `
-                        <div class="item-card">
+                        <div class="item-card ${isPacked ? 'packed' : ''}">
                             <div class="img-container">${imgHTML}</div>
-                            <label>
-                                <input type="checkbox" class="gear-checkbox" onchange="handleCheck(this)"> 
+                            <label style="cursor:pointer; display:block;">
+                                <input type="checkbox" class="gear-checkbox" ${isPacked ? 'checked' : ''} onchange="handleCheck(this, '${item.name}')"> 
                                 ${item.name}
                             </label>
                         </div>`;
@@ -246,30 +207,46 @@
             updateSummary();
         }
 
-        // 3. Logic Functions
-        function handleCheck(checkbox) {
-            checkbox.closest('.item-card').classList.toggle('hidden', checkbox.checked);
+        function handleCheck(checkbox, name) {
+            const card = checkbox.closest('.item-card');
+            savePackedStatus(name, checkbox.checked);
+            
+            if (checkbox.checked) {
+                card.classList.add('packed');
+                showUndoBar(name);
+            }
             updateSummary();
         }
 
-        function updateSummary() {
-            const allCheckboxes = document.querySelectorAll('.gear-checkbox');
-            const total = allCheckboxes.length;
-            const checked = Array.from(allCheckboxes).filter(i => i.checked).length;
-            const remaining = total - checked;
+        function showUndoBar(name) {
+            lastPackedItem = name;
+            const bar = document.getElementById('undo-bar');
+            const text = document.getElementById('undo-text');
+            text.innerText = `Packed: ${name}`;
+            bar.style.display = 'flex';
+        }
 
+        function undoLast() {
+            if (!lastPackedItem) return;
+            savePackedStatus(lastPackedItem, false);
+            lastPackedItem = null;
+            document.getElementById('undo-bar').style.display = 'none';
+            initApp(); // Redraw to bring item back
+        }
+
+        function updateSummary() {
+            const packedList = getPackedItems();
+            const total = gearData.length;
+            const packedCount = packedList.length;
+            const remaining = total - packedCount;
             const summaryDiv = document.getElementById('summary-stats');
+            
             if (summaryDiv) {
                 summaryDiv.innerHTML = `
                     <div style="padding:20px; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); text-align:center;">
                         <h3 style="margin:0;">${remaining} Items Remaining</h3>
-                        <div style="background:#eee; height:12px; border-radius:6px; margin:15px 0; overflow:hidden;">
-                            <div style="background:var(--accent); height:100%; width:${(checked/total || 0)*100}%; transition: width 0.4s ease;"></div>
-                        </div>
-                        <p style="margin:0; font-size:0.9rem; color:#666;">Packed ${checked} of ${total} items</p>
-                        ${remaining === 0 && total > 0 ? '<p style="color:var(--accent); font-weight:bold; margin-top:10px;">✨ Ready for the trip!</p>' : ''}
-                    </div>
-                `;
+                        <p style="margin:5px 0 0 0; color:#666;">Total Packed: ${packedCount} / ${total}</p>
+                    </div>`;
             }
         }
 
@@ -285,16 +262,20 @@
         function toggleAll(check) {
             const activePage = document.querySelector('.packing-page.active');
             if (!activePage) return;
-            activePage.querySelectorAll('.gear-checkbox').forEach(i => {
-                i.checked = check;
-                i.closest('.item-card').classList.toggle('hidden', check);
+            activePage.querySelectorAll('.gear-checkbox').forEach(cb => {
+                const name = cb.parentElement.innerText.trim();
+                cb.checked = check;
+                handleCheck(cb, name);
             });
-            updateSummary();
+        }
+
+        function resetEverything() {
+            if(confirm("Reset the whole list for a new trip?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                document.getElementById('undo-bar').style.display = 'none';
+                initApp();
+            }
         }
     </script>
-
-    <div>Icons made by <a href="https://www.flaticon.com/authors/flat-icons-com" title="Flat-icons-com">Flat-icons-com</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/eucalyp" title="Eucalyp">Eucalyp</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/pause08" title="Pause08">Pause08</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/pmicon" title="pmicon">pmicon</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/monkik" title="monkik">monkik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/photo3idea-studio" title="photo3idea_studio">photo3idea_studio</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/nhor-phai" title="Nhor Phai">Nhor Phai</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/good-ware" title="Good Ware">Good Ware</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/victoruler" title="Victoruler">Victoruler</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/triberion" title="Triberion">Triberion</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/vector-stall" title="Vector Stall">Vector Stall</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/pongsakornred" title="pongsakornRed">pongsakornRed</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/iconixar" title="iconixar">iconixar</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/mehwish" title="Mehwish">Mehwish</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/backwoods" title="Backwoods">Backwoods</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/surang" title="surang">surang</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/narak0rn" title="narak0rn">narak0rn</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/culmbio" title="Culmbio">Culmbio</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/dinosoftlabs" title="DinosoftLabs">DinosoftLabs</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/umeicon" title="Umeicon">Umeicon</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/flat-icons" title="Flat Icons">Flat Icons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/icon-place" title="Icon Place">Icon Place</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/vectorsmarket15" title="vectorsmarket15">vectorsmarket15</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/mihimihi" title="Mihimihi">Mihimihi</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/tanah-basah" title="Tanah Basah">Tanah Basah</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/designing-hub" title="Designing Hub">Designing Hub</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/vectors-tank" title="Vectors Tank">Vectors Tank</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/gungyoga04" title="gungyoga04">gungyoga04</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/viktor-turchyn" title="Viktor Turchyn">Viktor Turchyn</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/sbts2018" title="SBTS2018">SBTS2018</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/ylivdesign" title="Ylivdesign">Ylivdesign</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/ppangman" title="ppangman">ppangman</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/manshagraphics" title="manshagraphics">manshagraphics</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/nadiinko" title="Nadiinko">Nadiinko</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/icons-field" title="Icons_Field">Icons_Field</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/iconfield" title="iconfield">iconfield</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/park-jisun" title="Park Jisun">Park Jisun</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/three-musketeers" title="Three musketeers">Three musketeers</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/vector-squad" title="Vector Squad">Vector Squad</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
-
-
 </body>
 </html>

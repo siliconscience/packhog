@@ -21,7 +21,7 @@
             margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
             color: var(--primary);
-            padding-bottom: 100px; /* Space for the Undo bar */
+            padding-bottom: 100px; 
         }
 
         .config-panel {
@@ -71,7 +71,6 @@
         }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Undo Notification Bar */
         #undo-bar {
             position: fixed; bottom: 20px; left: 50%;
             transform: translateX(-50%);
@@ -125,17 +124,22 @@
         let lastPackedItem = null;
         const STORAGE_KEY = 'packhog_packed_items';
 
+        // RESTORED ORIGINAL PARSING LOGIC
         Papa.parse("dist/packhog.csv?v=" + Date.now(), {
             download: true,
             header: false, 
+            skipEmptyLines: true,
             complete: function(results) {
                 const rows = results.data;
                 if (!rows || rows.length < 2) return;
+                
+                // Map the rows exactly as your original file expects
                 gearData = rows.slice(1).map(row => ({
                     category: row[0] ? row[0].trim() : "Misc",
                     name: row[1] ? row[1].trim() : "Unknown Item",
                     image: row[2] ? row[2].trim() : ""
                 })).filter(item => item.category !== "");
+
                 initApp(); 
             }
         });
@@ -158,15 +162,20 @@
             const tabsContainer = document.getElementById('tabs-container');
             const contentArea = document.getElementById('content-area');
             const packedList = getPackedItems();
+            
             const activeActivities = Array.from(document.querySelectorAll('.activity-toggle:checked')).map(cb => cb.value.toLowerCase());
             const includeOvernight = document.getElementById('overnight-check').checked;
 
             let allCategories = [...new Set(gearData.map(item => item.category))];
+            
             let filteredCategories = allCategories.filter(cat => {
                 const lowCat = cat.toLowerCase();
-                if (lowCat.includes('overnight') && !includeOvernight) return false;
+                const isOvernightCat = lowCat.includes('overnight');
+                if (isOvernightCat && !includeOvernight) return false;
+                
                 const matchesActivity = activeActivities.some(act => lowCat.includes(act));
                 const isEssential = lowCat.includes('essential') || lowCat.includes('clothing') || lowCat.includes('misc');
+                
                 return matchesActivity || isEssential;
             });
 
@@ -175,6 +184,7 @@
 
             filteredCategories.forEach((cat, index) => {
                 const safeId = "page-" + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+
                 const btn = document.createElement('button');
                 btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
                 btn.innerText = cat;
@@ -197,7 +207,7 @@
                         <div class="item-card ${isPacked ? 'packed' : ''}">
                             <div class="img-container">${imgHTML}</div>
                             <label style="cursor:pointer; display:block;">
-                                <input type="checkbox" class="gear-checkbox" ${isPacked ? 'checked' : ''} onchange="handleCheck(this, '${item.name}')"> 
+                                <input type="checkbox" class="gear-checkbox" ${isPacked ? 'checked' : ''} onchange="handleCheck(this, '${item.name.replace(/'/g, "\\'")}')"> 
                                 ${item.name}
                             </label>
                         </div>`;
@@ -210,7 +220,6 @@
         function handleCheck(checkbox, name) {
             const card = checkbox.closest('.item-card');
             savePackedStatus(name, checkbox.checked);
-            
             if (checkbox.checked) {
                 card.classList.add('packed');
                 showUndoBar(name);
@@ -231,7 +240,7 @@
             savePackedStatus(lastPackedItem, false);
             lastPackedItem = null;
             document.getElementById('undo-bar').style.display = 'none';
-            initApp(); // Redraw to bring item back
+            initApp(); 
         }
 
         function updateSummary() {

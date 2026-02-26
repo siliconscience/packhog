@@ -200,13 +200,36 @@
         }
 
         function updateSummary() {
-            const total = gearData.length;
-            const packedCount = getPacked().length;
-            const remaining = total - packedCount;
+            // 1. Get the list of categories currently being shown
+            const activeActivities = Array.from(document.querySelectorAll('.activity-filter:checked')).map(cb => cb.value.toLowerCase());
+            const isOvernight = document.getElementById('overnight-check').checked;
+
+            // 2. Identify which categories are visible (using same logic as initApp)
+            const visibleCategories = [...new Set(gearData.map(item => item.category))].filter(cat => {
+                const lowCat = cat.toLowerCase();
+                if (lowCat.includes('overnight') && !isOvernight) return false;
+                const activityKeywords = ['hiking', 'skiing', 'rock climbing', 'ice climbing'];
+                const matchesAnyActivity = activityKeywords.some(kw => lowCat.includes(kw));
+                if (matchesAnyActivity) {
+                    return activeActivities.some(act => lowCat.includes(act));
+                }
+                return true; 
+            });
+
+            // 3. Filter gearData down to only items in those visible categories
+            const visibleItems = gearData.filter(item => visibleCategories.includes(item.category));
+            
+            // 4. Calculate stats based only on those visible items
+            const totalVisible = visibleItems.length;
+            const packedList = getPacked();
+            const packedVisibleCount = visibleItems.filter(item => packedList.includes(item.name)).length;
+            const remaining = totalVisible - packedVisibleCount;
+
             document.getElementById('summary-stats').innerHTML = `
                 <div style="padding:20px; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); text-align:center;">
                     <h3 style="margin:0;">${remaining} Items Remaining</h3>
-                    <p style="margin:5px 0 0 0; color:#666;">Total Packed: ${packedCount} / ${total}</p>
+                    <p style="margin:5px 0 0 0; color:#666;">Total Packed: ${packedVisibleCount} / ${totalVisible}</p>
+                    ${remaining === 0 && totalVisible > 0 ? '<p style="color:var(--accent); font-weight:bold; margin-top:5px;">✓ Ready to go!</p>' : ''}
                 </div>`;
         }
 
@@ -237,3 +260,4 @@
     </script>
 </body>
 </html>
+

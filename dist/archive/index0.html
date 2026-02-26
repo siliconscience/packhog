@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Packing List</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary: #2c3e50;
+            --accent: #27ae60;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { color: var(--primary); margin-bottom: 10px; }
+
+        /* Tabs / Page Navigation */
+        .tabs { margin-bottom: 20px; }
+        .tab-btn {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: #ddd;
+            margin: 0 5px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        /* Action Buttons */
+        .controls { margin-bottom: 20px; }
+        .btn {
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+        .check-all { background-color: var(--accent); color: white; }
+        .clear-all { background-color: #e74c3c; color: white; }
+
+        /* The Grid */
+        .packing-page {
+            display: none; /* Hidden by default */
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+        .packing-page.active { display: grid; }
+
+        /* Gear Item Styling */
+        .item-card {
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* The Magic: Hide when checked */
+        .item-card.hidden {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none; /* User can't click it while it fades */
+        }
+
+        .item-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .item-card label {
+            display: block;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* Empty State Message */
+        .empty-msg {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            font-style: italic;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>My Packing List</h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showPage('electronics')">Electronics</button>
+        <button class="tab-btn" onclick="showPage('clothing')">Clothing</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn check-all" onclick="toggleAll(true)">Check All</button>
+        <button class="btn clear-all" onclick="toggleAll(false)">Reset Page</button>
+    </div>
+
+    <div id="electronics" class="packing-page active">
+        <div class="item-card">
+            <img src="https://via.placeholder.com/150?text=Phone+Charger" alt="Charger">
+            <label><input type="checkbox" onchange="updateVisibility(this)"> Phone Charger</label>
+        </div>
+        <div class="item-card">
+            <img src="https://via.placeholder.com/150?text=Laptop" alt="Laptop">
+            <label><input type="checkbox" onchange="updateVisibility(this)"> Laptop</label>
+        </div>
+        </div>
+
+    <div id="clothing" class="packing-page">
+        <div class="item-card">
+            <img src="https://via.placeholder.com/150?text=T-Shirt" alt="Shirt">
+            <label><input type="checkbox" onchange="updateVisibility(this)"> Blue T-Shirt</label>
+        </div>
+        <div class="item-card">
+            <img src="https://via.placeholder.com/150?text=Hiking+Boots" alt="Boots">
+            <label><input type="checkbox" onchange="updateVisibility(this)"> Hiking Boots</label>
+        </div>
+    </div>
+
+    <script>
+        // Hides or shows the card based on checkbox status
+        function updateVisibility(checkbox) {
+            const card = checkbox.closest('.item-card');
+            if (checkbox.checked) {
+                card.classList.add('hidden');
+            } else {
+                card.classList.remove('hidden');
+            }
+        }
+
+        // Switches between categories
+        function showPage(pageId) {
+            // Update Tab Buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update visible page
+            document.querySelectorAll('.packing-page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // Check All / Clear All Logic
+        function toggleAll(shouldCheck) {
+            const activePage = document.querySelector('.packing-page.active');
+            const checkboxes = activePage.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = shouldCheck;
+                updateVisibility(cb);
+            });
+        }
+    </script>
+</body>
+</html>

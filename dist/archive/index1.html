@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Visual Packing List</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        :root { --bg: #f4f7f6; --primary: #2c3e50; --accent: #27ae60; --gray: #bdc3c7; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        
+        /* Tabs and Controls */
+        .tabs { margin-bottom: 20px; }
+        .tab-btn { padding: 10px 15px; cursor: pointer; border: none; background: #ddd; margin: 5px; border-radius: 5px; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .controls { margin-bottom: 20px; }
+        .btn { padding: 8px 15px; border-radius: 4px; border: none; cursor: pointer; color: white; margin: 5px; font-weight: bold;}
+        .check-all { background: var(--accent); }
+        .clear-all { background: #e74c3c; }
+
+        /* Grid Logic */
+        #content-area { width: 100%; max-width: 800px; }
+        .packing-page { display: none; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .packing-page.active { display: grid; }
+
+        /* Item Cards */
+        .item-card { background: white; padding: 10px; border-radius: 8px; text-align: center; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item-card.hidden { opacity: 0; transform: scale(0.9); pointer-events: none; }
+        
+        /* Image vs Coming Soon Box */
+        .img-container { width: 100%; height: 100px; border-radius: 4px; overflow: hidden; margin-bottom: 8px; background: #eee; display: flex; align-items: center; justify-content: center; }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .coming-soon { font-size: 12px; color: #7f8c8d; font-weight: bold; text-transform: uppercase; }
+
+        label { cursor: pointer; font-size: 14px; display: block; }
+    </style>
+</head>
+<body>
+
+    
+    <div id="content-area"></div>
+
+    <h1>My Packing List</h1>
+
+    <div class="overnight-toggle" style="margin-bottom: 15px; background: #eee; padding: 10px; border-radius: 8px;">
+        <label style="font-weight: bold; cursor: pointer;">
+            <input type="checkbox" id="overnight-check" onchange="initApp()"> 🌙 Include Overnight Gear
+        </label>
+    </div>
+
+    <div id="tabs-container" class="tabs"></div>
+    
+    <div class="controls">
+        <button class="btn check-all" onclick="toggleAll(true)">Check All</button>
+        <button class="btn clear-all" onclick="toggleAll(false)">Reset Page</button>
+    </div>
+<div id="summary-stats"></div>
+</body>
+<script>
+// 1. GLOBAL DATA & STATE
+let gearData = [];
+
+// 3. UI GENERATION LOGIC
+function initApp() {
+    const isOvernight = document.getElementById('overnight-check').checked;
+    const tabsContainer = document.getElementById('tabs-container');
+    const contentArea = document.getElementById('content-area');
+
+    let categories = [...new Set(gearData.map(item => item.category))];
+    if (!isOvernight) {
+        categories = categories.filter(cat => !cat.toLowerCase().includes('overnight'));
+    }
+
+    tabsContainer.innerHTML = '';
+    contentArea.innerHTML = '';
+
+    categories.forEach((cat, index) => {
+        const safeId = "page-" + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+        btn.innerText = cat;
+        btn.onclick = (e) => showPage(cat, e.target);
+        tabsContainer.appendChild(btn);
+
+        const page = document.createElement('div');
+        page.id = safeId;
+        page.className = `packing-page ${index === 0 ? 'active' : ''}`;
+        
+        const items = gearData.filter(i => i.category === cat);
+        items.forEach(item => {
+            const imgPath = item.image ? `dist/${item.image}` : null;
+            const imgHTML = imgPath 
+                ? `<img src="${imgPath}" alt="${item.name}" onerror="this.parentElement.innerHTML='<span class=\'coming-soon\'>Image Missing</span>'">`
+                : `<span class="coming-soon">Coming Soon</span>`;
+
+            page.innerHTML += `
+                <div class="item-card">
+                    <div class="img-container">${imgHTML}</div>
+                    <label>
+                        <input type="checkbox" class="gear-checkbox" onchange="handleCheck(this)"> 
+                        ${item.name}
+                    </label>
+                </div>`;
+        });
+        contentArea.appendChild(page);
+    });
+    updateSummary();
+}
+
+// 4. SUMMARY & PROGRESS LOGIC
+function handleCheck(checkbox) {
+    // Toggle visibility
+    checkbox.closest('.item-card').classList.toggle('hidden', checkbox.checked);
+    updateSummary();
+}
+
+function updateSummary() {
+    const allCheckboxes = document.querySelectorAll('.gear-checkbox');
+    const total = allCheckboxes.length;
+    const checked = Array.from(allCheckboxes).filter(i => i.checked).length;
+    const remaining = total - checked;
+
+    const summaryDiv = document.getElementById('summary-stats');
+    if (summaryDiv) {
+        summaryDiv.innerHTML = `
+            <div style="margin-top:20px; padding:15px; background:white; border-radius:8px; width:100%; max-width:800px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
+                <h3 style="margin:0; color:var(--primary);">Status: ${remaining} items left</h3>
+                <div style="background:#eee; height:10px; border-radius:5px; margin:10px 0; overflow:hidden;">
+                    <div style="background:var(--accent); height:100%; width:${(checked/total)*100}%; transition: width 0.3s ease;"></div>
+                </div>
+                <p style="font-size:0.9rem; color:#666;">Total Gear: ${total} | Packed: ${checked}</p>
+                ${remaining === 0 && total > 0 ? '<p style="color:var(--accent); font-weight:bold;">🎉 Everything is packed!</p>' : ''}
+            </div>
+        `;
+    }
+}
+
+// 5. NAVIGATION & CONTROLS
+function showPage(cat, btn) {
+    const safeId = "page-" + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    document.querySelectorAll('.packing-page').forEach(p => p.classList.remove('active'));
+    const targetPage = document.getElementById(safeId);
+    if (targetPage) targetPage.classList.add('active');
+}
+
+function toggleAll(check) {
+    const activePage = document.querySelector('.packing-page.active');
+    if (!activePage) return;
+    activePage.querySelectorAll('.gear-checkbox').forEach(i => {
+        i.checked = check;
+        i.closest('.item-card').classList.toggle('hidden', check);
+    });
+    updateSummary();
+}
+
+  // 2. LOAD DATA FROM THE SUBFOLDER
+Papa.parse("dist/packhog.csv", {
+    download: true,
+    header: false, 
+    skipEmptyLines: true,
+    complete: function(results) {
+        const rows = results.data;
+        if (!rows || rows.length < 2) return;
+
+        gearData = rows.slice(1).map(row => ({
+            category: row[0] ? row[0].trim() : "Other",
+            name: row[1] ? row[1].trim() : "Unknown Item",
+            image: row[2] ? row[2].trim() : ""
+        })).filter(item => item.category !== "");
+
+        initApp(); 
+    }
+});
+
+</script>
+</body>
+</html>

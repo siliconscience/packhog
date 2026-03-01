@@ -72,7 +72,7 @@
       <table class="category-table">
 	<thead>
           <tr>
-            <th>Clothing</th>
+            <th>Basics</th>
             <th>Activities</th>
             <th><label style="cursor:pointer"><input type="checkbox" id="overnight-check" onchange="toggleOvernight(this.checked)"> 🌙 Overnight</label></th>
             <th>Special</th>
@@ -80,7 +80,7 @@
 	</thead>
 	<tbody id="category-grid">
           <tr>
-            <td><div class="cell-content"><input type="checkbox" checked value="All" onchange="handleCategoryCheck(this)"><button class="tab-btn active" onclick="showPage('All', this)">All</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" checked value="always" onchange="handleCategoryCheck(this)"><button class="tab-btn active" onclick="showPage('Always', this)">Always</button></div></td>
             <td><div class="cell-content"><input type="checkbox" value="Hiking" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Hiking', this)">🥾 Hiking</button></div></td>
             <td><div class="cell-content"><input type="checkbox" value="Evening" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Evening', this)">🌆 Evening</button></div></td>
             <td><div class="cell-content"><input type="checkbox" value="Foreign" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Foreign', this)">🌍 Foreign</button></div></td>
@@ -100,7 +100,7 @@
           <tr>
             <td><div class="cell-content"><input type="checkbox" value="Hot Sport" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Hot Sport', this)">☀️ Hot</button></div></td>
             <td><div class="cell-content"><input type="checkbox" value="Ice Climbing" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Ice Climbing', this)">⛏️ Ice</button></div></td>
-            <td><div class="cell-content"><input type="checkbox" value="Electronics" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Electronics', this)">🔋 Electr.</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Electronics" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Electronics', this)">🔋 Electronics</button></div></td>
             <td></td>
           </tr>
           <tr>
@@ -221,7 +221,6 @@
 
       function updateSummary() {
 	  const packedList = getPacked();
-	  const allCheckbox = document.querySelector('input[value="All"]');
 	  
 	  // Get values of all checked boxes (excluding master Overnight toggle)
 	  const selectedValues = Array.from(document.querySelectorAll('#category-grid input[type="checkbox"]:checked'))

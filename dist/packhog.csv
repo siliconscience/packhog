@@ -1,18 +1,18 @@
 Category,Item,Image
-all,sunglasses,png/002-sunglasses.png
-all,windbreaker or raincoat,png/003-windbreaker.png
-all,map of destination,png/004-treasure-map.png
-all,weather at destination,png/005-meteorology.png
-all,bars,png/006-bar.png
-all,trail mix,png/007-trail-mix.png
-all,chocolate,png/012-chocolate-bar.png
-all,sandwich,png/008-sandwich.png
-all,water bottle,png/009-water.png
-all,sun hat,png/010-hat.png
-all,headlamp,png/011-headlamp.png
-all,headlamp batteries,png/001-energy.png
-all,first aid kit,mypng/first aid.png
-all,sos beacon,mypng/garmin sos.png
+always,sunglasses,png/002-sunglasses.png
+always,windbreaker or raincoat,png/003-windbreaker.png
+always,map of destination,png/004-treasure-map.png
+always,weather at destination,png/005-meteorology.png
+always,bars,png/006-bar.png
+always,trail mix,png/007-trail-mix.png
+always,chocolate,png/012-chocolate-bar.png
+always,sandwich,png/008-sandwich.png
+always,water bottle,png/009-water.png
+always,sun hat,png/010-hat.png
+always,headlamp,png/011-headlamp.png
+always,headlamp batteries,png/001-energy.png
+always,first aid kit,mypng/first aid.png
+always,sos beacon,mypng/garmin sos.png
 
 base,short sleeve,png/013-tshirt.png
 base,long sleeve,png/014-shirt.png
@@ -55,51 +55,52 @@ rock climbing,lead gear,png/042-spring-loaded-camming-device.png
 rock climbing,approach shoes,png/043-sneakers.png
 
 ice climbing,ice axes,png/096-ice-axe.png
-ice climbing,crampons,png/083-crampons-1.png
+ice climbing,rigid boot,png/075-ski-boots.png
+ice climbing,ice crampons,png/081-crampons.png
 ice climbing,ice helmet,png/036-helmet.png
 ice climbing,ice screws,png/097-ice-screw.png
 ice climbing,screw racks
 ice climbing,screw cleaner,mypng/brush.png
 ice climbing,gaiters,mypng/gaiter.png
 
-overnight evening,jeans,png/044-jeans.png
-overnight evening,tshirt,png/045-cotton-polo-shirt.png
-overnight evening,socks,png/046-clothes.png
+evening,jeans,png/044-jeans.png
+evening,tshirt,png/045-cotton-polo-shirt.png
+evening,socks,png/046-clothes.png
 
-overnight bath,contact lens case,png/047-contact-lens.png
-overnight bath,contact lens solution,png/048-solution.png
-overnight bath,medications,png/098-medicine.png
-overnight bath,razor,png/049-razor.png
-overnight bath,shave cream,png/050-shaving.png
-overnight bath,toothbrush,png/051-toothbrush.png
-overnight bath,toothpaste,png/052-toothpaste.png
+bath,contact lens case,png/047-contact-lens.png
+bath,contact lens solution,png/048-solution.png
+bath,medications,png/098-medicine.png
+bath,razor,png/049-razor.png
+bath,shave cream,png/050-shaving.png
+bath,toothbrush,png/051-toothbrush.png
+bath,toothpaste,png/052-toothpaste.png
 
-overnight bed,pajamas,png/053-pajamas.png
-overnight bed,hut slippers,png/054-clogs.png
+bed,pajamas,png/053-pajamas.png
+bed,hut slippers,png/054-clogs.png
 
-overnight electronics,headphone,png/057-earpiece.png
-overnight electronics,phone charger,png/058-phone-charger.png
-overnight electronics,plug multiplex,png/060-power-strip.png
-overnight electronics,usb multiplex,png/059-usb-hub.png
-overnight electronics,phone battery,png/061-power-bank.png
-overnight electronics,tablet,png/055-ipad.png
+electronics,headphone,png/057-earpiece.png
+electronics,phone charger,png/058-phone-charger.png
+electronics,plug multiplex,png/060-power-strip.png
+electronics,usb multiplex,png/059-usb-hub.png
+electronics,phone battery,png/061-power-bank.png
+electronics,tablet,png/055-ipad.png
 
-overnight food,mini kettle,png/062-kettle.png
-overnight food,coffee filter,png/063-cone.png
-overnight food,filters,png/064-coffee-filter.png
-overnight food,coffee,png/065-canned.png
-overnight food,hard boiled eggs,png/066-boiled-egg.png
-overnight food,bagels,png/067-bagel.png
-overnight food,freeze-dried
-overnight food,leftovers,png/068-leftovers.png
-overnight food,utensils bag,png/069-cutlery.png
-overnight food,teabags,png/070-teabag.png
-overnight food,oatmeal,png/071-cereal.png
-overnight food,raisins & nuts,png/072-grapes.png
+food,mini kettle,png/062-kettle.png
+food,coffee filter,png/063-cone.png
+food,filters,png/064-coffee-filter.png
+food,coffee,png/065-canned.png
+food,hard boiled eggs,png/066-boiled-egg.png
+food,bagels,png/067-bagel.png
+food,freeze-dried
+food,leftovers,png/068-leftovers.png
+food,utensils bag,png/069-cutlery.png
+food,teabags,png/070-teabag.png
+food,oatmeal,png/071-cereal.png
+food,raisins & nuts,png/072-grapes.png
 
-overnight foreign,euro plugs,png/073-socket.png
-overnight foreign,euro chargers
-overnight foreign,passport,png/074-passport.png
+foreign,euro plugs,png/073-socket.png
+foreign,euro chargers
+foreign,passport,png/074-passport.png
 
 skiing,ski boots,png/075-ski-boots.png
 skiing,skis,png/076-winter-s.png
@@ -112,20 +113,21 @@ skiing,gaiters,mypng/gaiter.png
 hiking,boots,png/080-shoes-1.png
 hiking,microspikes,png/082-cleats.png
 hiking,trail crampons,png/083-crampons-1.png
-hiking,crampons,png/081-crampons.png
 hiking,gaiters,mypng/gaiter.png
 hiking,poles,mypng/poles.png
 hiking,snowshoes,mypng/snowshoes.png
 
-overnight camping,tent,png/094-tent.png
-overnight camping,ground sheet,png/085-tarp-1.png
-overnight camping,sleeping pad(s),png/086-sleeping-mat.png
-overnight camping,sleeping bag,png/087-sleeping-bag.png
-overnight camping,stakes,png/088-stakes.png
-overnight camping,spade,png/089-shovel.png
-overnight camping,stove,png/090-camping-gas.png
-overnight camping,cook pot,png/091-cooking-pot.png
-overnight camping,cups,png/092-drink.png
-overnight camping,spork,png/093-spork.png
+camping,tent,png/094-tent.png
+camping,ground sheet,png/085-tarp-1.png
+camping,sleeping pad(s),png/086-sleeping-mat.png
+camping,sleeping bag,png/087-sleeping-bag.png
+camping,camp pillow,mypng/camp-pillow.png
+camping,stakes,png/088-stakes.png
+camping,spade,png/089-shovel.png
+camping,stove,png/090-camping-gas.png
+camping,cook pot,png/091-cooking-pot.png
+camping,cups,png/092-drink.png
+camping,spork,png/093-spork.png
+
 
 

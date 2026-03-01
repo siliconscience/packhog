@@ -5,112 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PackHog Visual Packing List</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    
     <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --primary: #2c3e50;
-            --accent: #27ae60;
-            --card-bg: #ffffff;
-            --danger: #e74c3c;
-        }
+        :root { --bg-color: #f0f2f5; --primary: #2c3e50; --accent: #27ae60; --card-bg: #ffffff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--primary); }
+        .header-row { display: flex; align-items: baseline; gap: 15px; margin-bottom: 10px; width: 100%; max-width: 800px; }
+        h1 { margin: 0; font-size: 1.5rem; }
+        #summary-stats { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
+        .config-panel { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; width: 100%; max-width: 800px; box-sizing: border-box; }
+        .category-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .category-table th { text-align: left; padding: 4px; border-bottom: 2px solid #eee; }
+        .category-table td { padding: 2px; vertical-align: top; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-            color: var(--primary);
-            padding-bottom: 80px;
-        }
+.cell-content {
+    display: flex;
+    align-items: center;
+    gap: 4px; /* Space between checkbox and button */
+    white-space: nowrap; /* Prevents the text from wrapping to a new line */
+    width: 100%;
+}
 
-        .config-panel {
-            background: white; padding: 15px 25px; border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px;
-            display: flex; flex-direction: column; gap: 15px;
-            width: 100%; max-width: 800px; align-items: center;
-        }
+.tab-btn {
+    flex-grow: 1; /* Makes the button fill the rest of the cell width */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds "..." if the text is somehow still too long */
+    padding: 6px 8px;
+    font-size: 0.85em;
+    border: none;
+    background: #eee;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+}
 
-        .toggle-row {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;
-            font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 10px;
-        }
+.category-table td {
+    padding: 2px 4px; /* Tighter padding to save space */
+    min-width: 120px; /* Ensures the column is wide enough for the pair */
+}
 
-        .toggle-row label { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+	.tab-btn:hover { background: #e0e0e0; }
+	.tab-btn.active { background: var(--primary); color: white; }
 
-        .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 20px; }
-        .tab-btn {
-            padding: 10px 18px; cursor: pointer; border: none;
-            background: #dcdde1; border-radius: 20px; font-weight: 600;
-        }
-        .tab-btn.active { background: var(--primary); color: white; }
 
-        .controls { margin-bottom: 20px; }
-        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin: 0 5px; color: white; }
+        .tab-btn input[type="checkbox"] { cursor: pointer; margin: 0; }
+        .controls { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+        .btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; font-size: 0.85em; }
         .check-all { background: var(--accent); }
         .reset-btn { background: #7f8c8d; }
-
-        #content-area { width: 100%; max-width: 800px; min-height: 300px; }
-        .packing-page { display: none; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        #content-area { width: 100%; max-width: 800px; }
+        .packing-page { display: none; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
         .packing-page.active { display: grid; }
-
-        .item-card {
-            background: var(--card-bg); padding: 12px; border-radius: 10px;
-            text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        }
+        .item-card { background: var(--card-bg); padding: 8px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .item-card.hidden { display: none !important; }
-
-        .img-container {
-            width: 100%; height: 110px; background: #f8f9fa;
-            border-radius: 6px; margin-bottom: 10px;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; border: 1px solid #eee;
-        }
+        .img-container { width: 100%; height: 90px; background: #f8f9fa; border-radius: 4px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #eee; font-size: 0.7em; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
-
-        #undo-btn {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #333; color: white; padding: 10px 20px; border-radius: 30px;
-            border: none; cursor: pointer; font-weight: bold; display: none; z-index: 100;
-        }
-
-        #summary-stats { width: 100%; max-width: 800px; margin-top: 30px; }
+        #undo-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; border: none; cursor: pointer; display: none; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <h1>PackHog List</h1>
+    <div class="header-row">
+        <h1>PackHog List</h1>
+        <div id="summary-stats">0 Items Remaining</div>
+    </div>
 
     <div class="config-panel">
-        <div class="toggle-row">
-            <label><input type="checkbox" class="activity-filter" value="hiking" checked onchange="initApp()"> 🥾 Hiking</label>
-            <label><input type="checkbox" class="activity-filter" value="ice climbing" onchange="initApp()"> ⛏️ Ice</label>
-            <label><input type="checkbox" class="activity-filter" value="rock climbing" onchange="initApp()"> 🧗 Rock</label>
-            <label><input type="checkbox" class="activity-filter" value="skiing" onchange="initApp()"> ⛷️ Skiing</label>
-            <label><input type="checkbox" id="overnight-check" onchange="initApp()"> 🌙 Overnight</label>
-        </div>
-        
-        <div id="tabs-container" class="tabs"></div>
+      <table class="category-table">
+	<thead>
+          <tr>
+            <th>Basics</th>
+            <th>Activities</th>
+            <th><label style="cursor:pointer"><input type="checkbox" id="overnight-check" onchange="toggleOvernight(this.checked)"> 🌙 Overnight</label></th>
+            <th>Special</th>
+          </tr>
+	</thead>
+	<tbody id="category-grid">
+          <tr>
+            <td><div class="cell-content"><input type="checkbox" checked value="always" onchange="handleCategoryCheck(this)"><button class="tab-btn active" onclick="showPage('All', this)">Always</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Hiking" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Hiking', this)">🥾 Hiking</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Evening" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Evening', this)">🌆 Evening</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Foreign" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Foreign', this)">🌍 Foreign</button></div></td>
+          </tr>
+          <tr>
+            <td><span class="cell-content"><input type="checkbox" value="Base" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Base', this)">👕 Base</button></span></td>
+            <td><div class="cell-content"><input type="checkbox" value="Rock Climbing" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Rock Climbing', this)">🧗 Rock</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Bed" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Bed', this)">🛌 Bed</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Camping" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Camping', this)">⛺ Camping</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="cell-content"><input type="checkbox" value="Cold Sport" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Cold Sport', this)">❄️ Cold</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Skiing" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Skiing', this)">⛷️ Skiing</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Bath" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Bath', this)">🧼 Bath</button></div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><div class="cell-content"><input type="checkbox" value="Hot Sport" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Hot Sport', this)">☀️ Hot</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Ice Climbing" onchange="handleCategoryCheck(this)"><button class="tab-btn" onclick="showPage('Ice Climbing', this)">⛏️ Ice</button></div></td>
+            <td><div class="cell-content"><input type="checkbox" value="Electronics" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Electronics', this)">🔋 Electronics</button></div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td><td></td>
+            <td><div class="cell-content"><input type="checkbox" value="Food" onchange="handleCategoryCheck(this)"><button class="tab-btn overnight-btn" onclick="showPage('Food', this)">🍎 Food</button></div></td>
+            <td></td>
+          </tr>
+	</tbody>
+      </table>
+
+
+
+
 
         <div class="controls">
             <button class="btn check-all" onclick="toggleAll(true)">Pack All on Page</button>
-            <button class="btn reset-btn" onclick="clearProgress()">Reset All Progress</button>
+            <button class="btn reset-btn" onclick="clearProgress()">Reset All</button>
         </div>
     </div>
 
     <div id="content-area"></div>
-    <div id="summary-stats"></div>
-    <button id="undo-btn" onclick="undoLast()">↺ Undo Last Item</button>
+    <button id="undo-btn" onclick="undoLast()">↺ Undo Last</button>
 
     <script>
         let gearData = [];
-        let lastPacked = null;
         const STORAGE_KEY = 'packhog_packed_list';
+        let lastPacked = null;
 
         Papa.parse("dist/packhog.csv?v=" + Date.now(), {
-            download: true,
-            header: false, 
-            skipEmptyLines: true,
+            download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
                 const rows = results.data;
                 if (!rows || rows.length < 2) return;
@@ -119,145 +139,146 @@
                     name: row[1] ? row[1].trim() : "Unknown Item",
                     image: row[2] ? row[2].trim() : ""
                 })).filter(item => item.category !== "");
-                initApp(); 
+                initApp();
             }
         });
 
         function getPacked() { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
         
-        function setPacked(name, isPacked) {
-            let packed = getPacked();
-            if (isPacked) { if (!packed.includes(name)) packed.push(name); }
-            else { packed = packed.filter(n => n !== name); }
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(packed));
-        }
-
         function initApp() {
-            const isOvernight = document.getElementById('overnight-check').checked;
-            const activeActivities = Array.from(document.querySelectorAll('.activity-filter:checked')).map(cb => cb.value.toLowerCase());
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = '';
             const packedList = getPacked();
+            const uniqueCategories = [...new Set(gearData.map(item => item.category))];
 
-            let categories = [...new Set(gearData.map(item => item.category))];
-            categories = categories.filter(cat => {
-                const lowCat = cat.toLowerCase();
-                if (lowCat.includes('overnight') && !isOvernight) return false;
-                const activityKeywords = ['hiking', 'skiing', 'rock climbing', 'ice climbing'];
-                const matchesAnyActivity = activityKeywords.some(kw => lowCat.includes(kw));
-                if (matchesAnyActivity) {
-                    return activeActivities.some(act => lowCat.includes(act));
-                }
-                return true; 
-            });
-
-            document.getElementById('tabs-container').innerHTML = '';
-            document.getElementById('content-area').innerHTML = '';
-
-            categories.forEach((cat, index) => {
+            uniqueCategories.forEach(cat => {
                 const safeId = "page-" + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-                const btn = document.createElement('button');
-                btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
-                btn.innerText = cat;
-                btn.onclick = (e) => showPage(cat, e.target);
-                document.getElementById('tabs-container').appendChild(btn);
-
                 const page = document.createElement('div');
                 page.id = safeId;
-                page.className = `packing-page ${index === 0 ? 'active' : ''}`;
+                const activeBtn = document.querySelector('.tab-btn.active');
+                const activeCat = activeBtn ? activeBtn.innerText.replace(/[^\w\s]/g, '').trim() : uniqueCategories[0];
+                page.className = `packing-page ${cat.toLowerCase() === activeCat.toLowerCase() ? 'active' : ''}`;
                 
                 gearData.filter(i => i.category === cat).forEach(item => {
                     const isPacked = packedList.includes(item.name);
                     const imgPath = item.image ? `dist/${item.image}` : null;
                     const imgHTML = imgPath ? `<img src="${imgPath}" onerror="this.parentElement.innerHTML='Image Missing'">` : `No Photo`;
-
-                    page.innerHTML += `
-                        <div class="item-card ${isPacked ? 'hidden' : ''}">
-                            <div class="img-container">${imgHTML}</div>
-                            <label><input type="checkbox" class="gear-checkbox" ${isPacked ? 'checked' : ''} onchange="handleCheck(this, '${item.name.replace(/'/g, "\\'")}')"> ${item.name}</label>
-                        </div>`;
+                    page.innerHTML += `<div class="item-card ${isPacked ? 'hidden' : ''}">
+                        <div class="img-container">${imgHTML}</div>
+                        <label><input type="checkbox" class="gear-checkbox" ${isPacked ? 'checked' : ''} onchange="handleCheck(this, '${item.name.replace(/'/g, "\\'")}')"> ${item.name}</label>
+                    </div>`;
                 });
-                document.getElementById('content-area').appendChild(page);
+                contentArea.appendChild(page);
             });
+            toggleOvernight(document.getElementById('overnight-check').checked);
             updateSummary();
         }
+      function toggleOvernight(checked) {
+	  const overnightCells = document.querySelectorAll('td:nth-child(3) .cell-content');
+	  overnightCells.forEach(cell => {
+              const checkbox = cell.querySelector('input[type="checkbox"]');
+              const btn = cell.querySelector('.tab-btn');
+              
+              // Match checkbox state to master toggle
+              if (checkbox) checkbox.checked = checked;
+              
+              // Dim UI if inactive
+              cell.style.opacity = checked ? "1" : "0.3";
+              cell.style.pointerEvents = checked ? "auto" : "none";
+	  });
+	  updateSummary();
+      }
+
+      function handleCategoryCheck(cb) {
+	  if (!cb.checked) {
+	      const btn = cb.parentElement.querySelector('.tab-btn');
+	      if (btn && btn.classList.contains('active')) {
+		  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+		  document.querySelectorAll('.packing-page').forEach(p => p.classList.remove('active'));
+	      }
+	  }
+	  updateSummary();
+      }
+
+      function showPage(catName, btn) {
+	  // Check the box in the same cell
+	  const checkbox = btn.parentElement.querySelector('input[type="checkbox"]');
+	  if (checkbox) checkbox.checked = true;
+
+	  const cleanCatName = catName.replace(/[^\w\s]/g, '').trim();
+	  const safeId = "page-" + cleanCatName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+	  
+	  // UI selection
+	  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+	  btn.classList.add('active');
+
+	  document.querySelectorAll('.packing-page').forEach(p => p.classList.remove('active'));
+	  const targetPage = document.getElementById(safeId);
+	  if(targetPage) targetPage.classList.add('active');
+
+	  updateSummary();
+      }
+
+      function updateSummary() {
+	  const packedList = getPacked();
+	  
+	  // Get values of all checked boxes (excluding master Overnight toggle)
+	  const selectedValues = Array.from(document.querySelectorAll('#category-grid input[type="checkbox"]:checked'))
+                .map(cb => cb.value.toLowerCase());
+
+	  const visibleItems = gearData.filter(item => {
+              const lowCat = item.category.toLowerCase();
+              return selectedValues.some(sel => lowCat.includes(sel));
+	  });
+
+	  const total = visibleItems.length;
+	  const packed = visibleItems.filter(item => packedList.includes(item.name)).length;
+	  const remaining = total - packed;
+
+	  const statsEl = document.getElementById('summary-stats');
+	  statsEl.innerText = `${remaining} Items Remaining (${packed}/${total})`;
+      }
+
 
         function handleCheck(cb, name) {
-            setPacked(name, cb.checked);
-            if (cb.checked) {
+            let packed = getPacked();
+            if (cb.checked) { 
+                if (!packed.includes(name)) packed.push(name);
                 lastPacked = name;
                 document.getElementById('undo-btn').style.display = 'block';
                 cb.closest('.item-card').classList.add('hidden');
+            } else { 
+                packed = packed.filter(n => n !== name); 
             }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(packed));
             updateSummary();
+        }
+
+
+        function toggleAll(check) {
+            const activePage = document.querySelector('.packing-page.active');
+            if (!activePage) return;
+            activePage.querySelectorAll('.gear-checkbox').forEach(cb => {
+                if (!cb.checked) {
+                    cb.checked = check;
+                    handleCheck(cb, cb.parentElement.innerText.trim());
+                }
+            });
         }
 
         function undoLast() {
             if (lastPacked) {
-                setPacked(lastPacked, false);
+                let packed = getPacked().filter(n => n !== lastPacked);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(packed));
                 lastPacked = null;
                 document.getElementById('undo-btn').style.display = 'none';
                 initApp();
             }
         }
 
-        function updateSummary() {
-            // 1. Get the list of categories currently being shown
-            const activeActivities = Array.from(document.querySelectorAll('.activity-filter:checked')).map(cb => cb.value.toLowerCase());
-            const isOvernight = document.getElementById('overnight-check').checked;
-
-            // 2. Identify which categories are visible (using same logic as initApp)
-            const visibleCategories = [...new Set(gearData.map(item => item.category))].filter(cat => {
-                const lowCat = cat.toLowerCase();
-                if (lowCat.includes('overnight') && !isOvernight) return false;
-                const activityKeywords = ['hiking', 'skiing', 'rock climbing', 'ice climbing'];
-                const matchesAnyActivity = activityKeywords.some(kw => lowCat.includes(kw));
-                if (matchesAnyActivity) {
-                    return activeActivities.some(act => lowCat.includes(act));
-                }
-                return true; 
-            });
-
-            // 3. Filter gearData down to only items in those visible categories
-            const visibleItems = gearData.filter(item => visibleCategories.includes(item.category));
-            
-            // 4. Calculate stats based only on those visible items
-            const totalVisible = visibleItems.length;
-            const packedList = getPacked();
-            const packedVisibleCount = visibleItems.filter(item => packedList.includes(item.name)).length;
-            const remaining = totalVisible - packedVisibleCount;
-
-            document.getElementById('summary-stats').innerHTML = `
-                <div style="padding:20px; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); text-align:center;">
-                    <h3 style="margin:0;">${remaining} Items Remaining</h3>
-                    <p style="margin:5px 0 0 0; color:#666;">Total Packed: ${packedVisibleCount} / ${totalVisible}</p>
-                    ${remaining === 0 && totalVisible > 0 ? '<p style="color:var(--accent); font-weight:bold; margin-top:5px;">✓ Ready to go!</p>' : ''}
-                </div>`;
-        }
-
-        function showPage(cat, btn) {
-            const safeId = "page-" + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-            document.querySelectorAll('.packing-page').forEach(p => p.classList.remove('active'));
-            document.getElementById(safeId).classList.add('active');
-        }
-
-        function toggleAll(check) {
-            const activePage = document.querySelector('.packing-page.active');
-            if (!activePage) return;
-            activePage.querySelectorAll('.gear-checkbox').forEach(cb => {
-                const name = cb.parentElement.innerText.trim();
-                cb.checked = check;
-                handleCheck(cb, name);
-            });
-        }
-
         function clearProgress() {
-            if(confirm("Clear all packed items?")) {
-                localStorage.removeItem(STORAGE_KEY);
-                initApp();
-            }
+            if(confirm("Reset all?")) { localStorage.removeItem(STORAGE_KEY); initApp(); }
         }
     </script>
 </body>
 </html>
-

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-Week Trip Planner</title>
+    <style>
+
+/* Hidden color picker that we trigger programmatically */
+#hidden-color-picker {
+    position: fixed;
+    visibility: hidden;
+    bottom: 0;
+    left: 0;
+}
+
+@media print {
+    .no-print { display: none; }
+    body { padding: 0; }
+    @page { size: landscape; margin: 0.5cm; }
+    
+    /* Forces background colors and images to print */
+    * { 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+    }
+    
+    td { height: 1.1in; } 
+}
+
+.calendar-day { transition: background-color 0.2s; }
+
+body { font-family: -apple-system, sans-serif; padding: 20px; }
+        .no-print { background: #f0f2f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        input { padding: 8px; margin: 0 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #000; height: 110px; vertical-align: top; padding: 5px; }
+        th { background: #f8f9fa; height: auto; text-align: center; font-size: 0.9em; }
+        
+        .date-num { font-weight: bold; font-size: 1.1em; }
+        .outside { background: #f2f2f2; color: #888; }
+
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; }
+            @page { size: landscape; margin: 0.5cm; }
+            td { height: 1.3in; } 
+        }
+    </style>
+</head>
+<body>
+
+  <input type="color" id="hidden-color-picker">
+  
+
+<div class="no-print">
+    <strong>Trip Calendar Generator</strong><br><br>
+    Start: <input type="date" id="start">
+    End: <input type="date" id="end">
+    <button onclick="makeCalendar()">Generate Grid</button>
+    <button onclick="window.print()">Print / Save as PDF</button>
+    <div class="controls">
+    <button class="btn reset-btn" onclick="clearCalendarColors()">🗑️ Clear All Colors</button>
+    <input type="color" id="hidden-color-picker" style="display:none">
+</div>
+</div>
+
+<div id="output"></div>
+
+<script>
+  const COLOR_STORAGE_KEY = 'trip_calendar_colors';
+
+function getSavedColors() {
+    return JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY)) || {};
+}
+
+function saveCalendar() {
+    const colorMap = {};
+    document.querySelectorAll('.calendar-day').forEach(day => {
+        if (day.style.backgroundColor) {
+            // We store by the text (date) to keep it simple
+            const dateKey = day.querySelector('.date-num').innerText;
+            colorMap[dateKey] = {
+                bg: day.style.backgroundColor,
+                fg: day.style.color
+            };
+        }
+    });
+    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(colorMap));
+}
+
+function makeCalendar() {
+    const sVal = document.getElementById('start').value;
+    const eVal = document.getElementById('end').value;
+    if(!sVal || !eVal) return alert("Select dates first!");
+
+    const savedColors = getSavedColors();
+    let startDate = new Date(sVal + 'T00:00:00');
+    let endDate = new Date(eVal + 'T00:00:00');
+
+    let startOffset = startDate.getDay() === 0 ? 6 : startDate.getDay() - 1;
+    let calStart = new Date(startDate);
+    calStart.setDate(startDate.getDate() - startOffset);
+
+    let endOffset = endDate.getDay() === 0 ? 0 : 7 - endDate.getDay();
+    let calEnd = new Date(endDate);
+    calEnd.setDate(endDate.getDate() + endOffset);
+
+    // Add ID to table here
+    let html = '<table id="calendar-grid"><tr><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr><tr>';
+    
+    let curr = new Date(calStart);
+    let i = 0;
+    while(curr <= calEnd) {
+        if(i > 0 && i % 7 === 0) html += '</tr><tr>';
+        
+        let isOutside = curr < startDate || curr > endDate;
+        let dayClass = isOutside ? 'outside' : '';
+        let displayDate = (curr.getMonth()+1) + '/' + curr.getDate();
+        
+        // Check if we have a saved color for this specific date string
+        let style = "";
+        if (savedColors[displayDate]) {
+            style = `style="background-color: ${savedColors[displayDate].bg}; color: ${savedColors[displayDate].fg};"`;
+        }
+        
+        html += `<td class="calendar-day ${dayClass}" ${style}><span class="date-num">${displayDate}</span></td>`;
+        curr.setDate(curr.getDate() + 1);
+        i++;
+    }
+    
+    html += '</tr></table>';
+    document.getElementById('output').innerHTML = html;
+    initCalendarInteraction();
+}
+
+function clearCalendarColors() {
+    if(confirm("Clear all colored highlights?")) {
+        localStorage.removeItem(COLOR_STORAGE_KEY);
+        makeCalendar(); // Refresh the grid
+    }
+}
+
+  function makeCalendar() {
+      const sVal = document.getElementById('start').value;
+      const eVal = document.getElementById('end').value;
+      if(!sVal || !eVal) return alert("Select dates first!");
+
+      let startDate = new Date(sVal + 'T00:00:00');
+      let endDate = new Date(eVal + 'T00:00:00');
+
+      // Roll back to the previous Monday
+      let startOffset = startDate.getDay() === 0 ? 6 : startDate.getDay() - 1;
+      let calStart = new Date(startDate);
+      calStart.setDate(startDate.getDate() - startOffset);
+
+      // Roll forward to the next Sunday
+      let endOffset = endDate.getDay() === 0 ? 0 : 7 - endDate.getDay();
+      let calEnd = new Date(endDate);
+      calEnd.setDate(endDate.getDate() + endOffset);
+
+      let html = '<table id="calendar-grid"><tr><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr><tr>';
+      
+      let curr = new Date(calStart);
+      let i = 0;
+      while(curr <= calEnd) {
+          if(i > 0 && i % 7 === 0) html += '</tr><tr>';
+          
+          let isOutside = curr < startDate || curr > endDate;
+          let dayClass = isOutside ? 'outside' : '';
+          let displayDate = (curr.getMonth()+1) + '/' + curr.getDate();
+          
+	  html += `<td class="calendar-day ${dayClass}"><span class="date-num">${displayDate}</span></td>`;
+          curr.setDate(curr.getDate() + 1);
+          i++;
+      }
+      
+      html += '</tr></table>';
+      document.getElementById('output').innerHTML = html;
+
+      initCalendarInteraction()
+
+  }
+      
+
+  let isDragging = false;
+  let selectedDays = [];
+
+  // Initialize the dragging listeners
+  function initCalendarInteraction() {
+      const grid = document.getElementById('calendar-grid');
+      const picker = document.getElementById('hidden-color-picker');
+
+      grid.addEventListener('mousedown', (e) => {
+          const day = e.target.closest('.calendar-day');
+          if (day) {
+              isDragging = true;
+              selectedDays = [day];
+              day.classList.add('selected');
+              // Prevent browser from trying to "drag" the text/element
+              e.preventDefault();
+          }
+      });
+
+      grid.addEventListener('mouseover', (e) => {
+          if (isDragging) {
+              const day = e.target.closest('.calendar-day');
+              if (day && !selectedDays.includes(day)) {
+                  selectedDays.push(day);
+                  day.classList.add('selected');
+              }
+          }
+      });
+
+      window.addEventListener('mouseup', () => {
+          if (isDragging) {
+              isDragging = false;
+              if (selectedDays.length > 0) {
+                  // Open the color picker
+                  picker.click();
+                  
+                  // When user picks a color
+                  picker.oninput = (e) => {
+                      const color = e.target.value;
+                      selectedDays.forEach(day => {
+                          day.style.backgroundColor = color;
+                          // Contrast check for text color
+                          day.style.color = getContrastYIQ(color);
+                          day.classList.remove('selected');
+                      });
+                      saveCalendar(); // Call your save function here
+                  };
+              }
+          }
+      });
+  }
+
+
+  // Function to clear all colors
+  function clearCalendarColors() {
+      if(confirm("Clear all colored highlights from the calendar?")) {
+          document.querySelectorAll('.calendar-day').forEach(day => {
+              day.style.backgroundColor = "";
+              day.style.color = "";
+          });
+          saveCalendar();
+      }
+  }
+
+// Helper: Makes text white on dark backgrounds, black on light ones
+function getContrastYIQ(hexcolor){
+    hexcolor = hexcolor.replace("#", "");
+    var r = parseInt(hexcolor.substr(0,2),16);
+    var g = parseInt(hexcolor.substr(2,2),16);
+    var b = parseInt(hexcolor.substr(4,2),16);
+    var yiq = ((r*299)+(g*587)+(b*114))/1000;
+    return (yiq >= 128) ? 'black' : 'white';
+}
+
+  
+</script>
+
+</body>
+</html>

@@ -11,8 +11,12 @@ always,water bottle,png/009-water.png
 always,sun hat,png/010-hat.png
 always,headlamp,png/011-headlamp.png
 always,headlamp batteries,png/001-energy.png
-always,first aid kit,mypng/first aid.png
-always,sos beacon,mypng/garmin sos.png
+
+
+safety,first aid kit,mypng/first aid.png
+safety,sos beacon,mypng/garmin sos.png
+safety,swiss army knife,098-swiss-army-knife.png
+safety,fire starter,099-lighter.png
 
 base,short sleeve,png/013-tshirt.png
 base,long sleeve,png/014-shirt.png

@@ -66,6 +66,7 @@
     <div class="header-row">
         <h1>PackHog List</h1>
         <div id="summary-stats">0 Items Remaining</div>
+	<span><a href="netc-mobile.html" style="color: var(--accent); font-weight: bold; font-size: 1.1rem; text-decoration: none;">NETC page</a></span>
     </div>
 
     <div class="config-panel">

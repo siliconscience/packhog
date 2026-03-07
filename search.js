@@ -106,8 +106,8 @@ function buildCalendar(reports) {
 
 function extractReport(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
+    const tds = Array.from(doc.querySelectorAll('td'));
     const findField = (label) => {
-        const tds = Array.from(doc.querySelectorAll('td'));
         const match = tds.find(td => td.textContent.trim() === label);
         return match ? match.nextElementSibling?.textContent.trim() : "";
     };
@@ -116,6 +116,8 @@ function extractReport(html) {
         trail:    findField("Trails:"),
         date:     findField("Date of Hike:"),
         parking:  findField("Parking/Access Road Notes:"),
+        name:     findField("Name:"),
+        email:    findField("E-Mail:"),
         comments: findField("Comments:"),
     };
 }
@@ -134,6 +136,8 @@ async function loadReport(idx) {
             <h4>${r.peak} &mdash; ${r.date}</h4>
             <p><b>Trail:</b> ${r.trail}</p>
             <p><b>Parking:</b> ${r.parking}</p>
+            <p><b>Name:</b> ${r.name}</p>
+            <p><b>Email:</b> ${r.email}</p>
             <div class="comments-box"><b>Comments:</b><br><br>${r.comments}</div>
         `;
     } catch (err) {

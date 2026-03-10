@@ -45,6 +45,28 @@ async function getHourlyForecast(office, gridX, gridY) {
   return data.properties.periods;
 }
 
+async function getGridpointData(office, gridX, gridY) {
+  const url = `https://api.weather.gov/gridpoints/${office}/${gridX},${gridY}`;
+  const res = await fetch(url, { headers: { 'User-Agent': 'wx.html mountain weather app' } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.properties;
+}
+
+function buildSkyCoverMap(skyCoverValues) {
+  const map = {};
+  for (const { validTime, value } of skyCoverValues) {
+    const [startStr, durationStr] = validTime.split('/');
+    const hours = parseInt((durationStr.match(/PT(\d+)H/) || [, '1'])[1]);
+    const start = new Date(startStr);
+    for (let i = 0; i < hours; i++) {
+      const key = new Date(start.getTime() + i * 3600000).toISOString().slice(0, 13);
+      map[key] = value ?? 0;
+    }
+  }
+  return map;
+}
+
 function parseWindSpeed(windSpeedStr) {
   if (!windSpeedStr) return 0;
   const nums = windSpeedStr.match(/\d+/g);
@@ -52,8 +74,10 @@ function parseWindSpeed(windSpeedStr) {
   return Math.max(...nums.map(Number));
 }
 
-function buildTimeSeries(periods) {
-  const TARGET_HOURS = new Set([1, 8, 12, 18]);
+function buildTimeSeries(periods, skyCoverMap) {
+  const TARGET_HOURS = new Set([8, 10, 12, 14, 16, 18, 20, 1]);
+  const LABEL_HOURS = new Set([8, 12, 18]);
+  const TIME_STRS = { 1: '1am', 8: '8am', 10: '10am', 12: 'noon', 14: '2pm', 16: '4pm', 18: '6pm', 20: '8pm' };
   const points = [];
 
   for (const p of periods) {
@@ -62,19 +86,22 @@ function buildTimeSeries(periods) {
     if (!TARGET_HOURS.has(h)) continue;
 
     const day = start.toLocaleDateString('en-US', { weekday: 'short' });
-    const timeStr = h === 1 ? '1am' : h === 8 ? '8am' : h === 12 ? 'noon' : '6pm';
-    // Labels must be unique across all 28 points so use day+time
-    const label = `${day} ${timeStr}`;
+    const label = `${day} ${TIME_STRS[h]}`;
 
+    const utcKey = start.toISOString().slice(0, 13);
     points.push({
+      x: points.length,
       label,
+      hour: h,
+      showLabel: LABEL_HOURS.has(h),
       temp: p.temperature,
       unit: p.temperatureUnit,
       pop: p.probabilityOfPrecipitation?.value ?? 0,
-      wind: parseWindSpeed(p.windSpeed)
+      wind: parseWindSpeed(p.windSpeed),
+      skyCover: skyCoverMap ? (skyCoverMap[utcKey] ?? null) : null
     });
 
-    if (points.length >= 28) break;
+    if (points.length >= 56) break; // 7 days × 8 points
   }
 
   return points;
@@ -91,17 +118,17 @@ function tempColor(temp, unit) {
 
 const CHART_CONFIG = { responsive: true, displayModeBar: false };
 
-function buildNightShapes(xs) {
+function buildNightShapes(points) {
   const shapes = [];
-  for (let i = 0; i < xs.length; i++) {
-    if (xs[i].endsWith('6pm')) {
-      const nextMorning = xs.findIndex((l, j) => j > i && l.endsWith('8am'));
+  for (let i = 0; i < points.length; i++) {
+    if (points[i].hour === 18) { // 6pm
+      const nextMorning = points.findIndex((p, j) => j > i && p.hour === 8);
       if (nextMorning !== -1) {
         shapes.push({
           type: 'rect',
           xref: 'x', yref: 'paper',
-          x0: i,           // center of 6pm category
-          x1: nextMorning, // center of 8am category
+          x0: points[i].x,
+          x1: points[nextMorning].x,
           y0: 0, y1: 1,
           fillcolor: 'rgba(100,100,140,0.10)',
           line: { width: 0 },
@@ -113,7 +140,7 @@ function buildNightShapes(xs) {
   return shapes;
 }
 
-function baseLayout(title, yTitle, yRange) {
+function baseLayout(title, yTitle, yRange, xaxisExtra) {
   return {
     title: { text: title, font: { size: 13, color: '#2c3e50' }, x: 0.5 },
     paper_bgcolor: '#ffffff',
@@ -123,7 +150,8 @@ function baseLayout(title, yTitle, yRange) {
     xaxis: {
       tickfont: { size: 10 },
       fixedrange: true,
-      tickangle: -45
+      tickangle: -45,
+      ...xaxisExtra
     },
     yaxis: {
       title: yTitle,
@@ -135,10 +163,18 @@ function baseLayout(title, yTitle, yRange) {
 }
 
 function renderCharts(points) {
-  const xs = points.map(p => p.label);
+  const xs = points.map(p => p.x);        // numeric indices for equal spacing
+  const labels = points.map(p => p.label); // for hover tooltips
   const unit = points[0]?.unit || 'F';
 
-  const nightShapes = buildNightShapes(xs);
+  // Only label 8am, noon, 6pm on the x-axis
+  const labeled = points.filter(p => p.showLabel);
+  const xTicks = {
+    tickvals: labeled.map(p => p.x),
+    ticktext: labeled.map(p => p.label)
+  };
+
+  const nightShapes = buildNightShapes(points);
 
   // Temperature
   const temps = points.map(p => p.temp);
@@ -154,28 +190,61 @@ function renderCharts(points) {
     mode: 'lines+markers',
     x: xs,
     y: temps,
+    text: labels,
     line: { color: '#d4603a', width: 2 },
     marker: { color: points.map(p => tempColor(p.temp, p.unit)), size: 7, line: { color: '#fff', width: 1 } },
-    hovertemplate: '%{x}<br>%{y}°' + unit + '<extra></extra>'
+    hovertemplate: '%{text}<br>%{y}°' + unit + '<extra></extra>'
   }], {
-    ...baseLayout('Temperature', `°${unit}`, [tempMin - 8, tempMax + 8]),
+    ...baseLayout('Temperature', `°${unit}`, [tempMin - 8, tempMax + 8], xTicks),
     shapes: [...nightShapes, ...(unit === 'F' ? [freezingShape] : [])]
   }, CHART_CONFIG);
 
-  // PoP
+  // PoP + Cloud Cover
   const pops = points.map(p => p.pop);
-  Plotly.newPlot('chart-pop', [{
+  const clouds = points.map(p => p.skyCover);
+  const hasCloud = clouds.some(v => v !== null);
+
+  const popTraces = [];
+  if (hasCloud) {
+    // Invisible top boundary at y=100; tonexty on the next trace fills UP to this
+    popTraces.push({
+      type: 'scatter',
+      mode: 'lines',
+      x: xs,
+      y: xs.map(() => 100),
+      line: { color: 'rgba(0,0,0,0)', width: 0 },
+      showlegend: false,
+      hoverinfo: 'skip'
+    });
+    // Cloud cover line — fill='tonexty' fills from cloud% UP to 100 (sunshine area in yellow)
+    popTraces.push({
+      type: 'scatter',
+      mode: 'lines',
+      x: xs,
+      y: clouds,
+      text: labels,
+      name: 'Cloud Cover',
+      line: { color: 'rgba(200,170,0,0.6)', width: 1.5 },
+      fill: 'tonexty',
+      fillcolor: 'rgba(255,215,0,0.30)',
+      hovertemplate: '%{text}<br>Cloud: %{y}%<extra></extra>'
+    });
+  }
+  popTraces.push({
     type: 'scatter',
     mode: 'lines+markers',
     x: xs,
     y: pops,
+    text: labels,
+    name: 'PoP',
     line: { color: '#4a90d9', width: 2 },
     marker: { color: '#4a90d9', size: 6, line: { color: '#fff', width: 1 } },
     fill: 'tozeroy',
-    fillcolor: 'rgba(74,144,217,0.15)',
-    hovertemplate: '%{x}<br>%{y}%<extra></extra>'
-  }], {
-    ...baseLayout('Chance of Precipitation', '%', [0, 105]),
+    fillcolor: 'rgba(74,144,217,0.20)',
+    hovertemplate: '%{text}<br>PoP: %{y}%<extra></extra>'
+  });
+  Plotly.newPlot('chart-pop', popTraces, {
+    ...baseLayout('Chance of Precipitation & Cloud Cover', '%', [0, 105], xTicks),
     shapes: nightShapes
   }, CHART_CONFIG);
 
@@ -187,13 +256,14 @@ function renderCharts(points) {
     mode: 'lines+markers',
     x: xs,
     y: winds,
+    text: labels,
     line: { color: '#5a9e4b', width: 2 },
     marker: { color: '#5a9e4b', size: 6, line: { color: '#fff', width: 1 } },
     fill: 'tozeroy',
     fillcolor: 'rgba(90,158,75,0.15)',
-    hovertemplate: '%{x}<br>%{y} mph<extra></extra>'
+    hovertemplate: '%{text}<br>%{y} mph<extra></extra>'
   }], {
-    ...baseLayout('Max Wind Speed', 'mph', [0, windMax * 1.25]),
+    ...baseLayout('Max Wind Speed', 'mph', [0, windMax * 1.25], xTicks),
     shapes: nightShapes
   }, CHART_CONFIG);
 }
@@ -283,8 +353,14 @@ async function search(query) {
     const points = await getNWSPoints(loc.latitude, loc.longitude);
     setStatus('Loading hourly forecast…');
 
-    const periods = await getHourlyForecast(points.office, points.gridX, points.gridY);
-    const series = buildTimeSeries(periods);
+    const [periods, gridData] = await Promise.all([
+      getHourlyForecast(points.office, points.gridX, points.gridY),
+      getGridpointData(points.office, points.gridX, points.gridY).catch(() => null)
+    ]);
+    const skyCoverMap = gridData?.skyCover?.values
+      ? buildSkyCoverMap(gridData.skyCover.values)
+      : null;
+    const series = buildTimeSeries(periods, skyCoverMap);
 
     if (series.length === 0) {
       setStatus('No matching forecast hours found.', true);

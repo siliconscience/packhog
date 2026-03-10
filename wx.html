@@ -10,7 +10,7 @@
 <body>
   <div class="container">
     <h1>Mountain Weather</h1>
-    <p class="subtitle">Hourly daytime temperatures for the next week</p>
+    <p class="subtitle">7-day forecast — temperature, precipitation, and wind</p>
     <form id="search-form">
       <div class="input-row">
         <input type="text" id="location-input" placeholder="Enter a location (e.g. Denali, Rainier, Flagstaff)" autocomplete="off">
@@ -18,7 +18,11 @@
       </div>
     </form>
     <p id="status"></p>
-    <div id="chart"></div>
+    <div id="charts">
+      <div id="chart-temp" class="chart-panel"></div>
+      <div id="chart-pop" class="chart-panel"></div>
+      <div id="chart-wind" class="chart-panel"></div>
+    </div>
     <div id="strip"></div>
   </div>
   <script src="wx.js"></script>

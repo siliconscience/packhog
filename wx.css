@@ -93,14 +93,19 @@ button[type="submit"]:hover {
   font-weight: 500;
 }
 
-#chart {
-  width: 100%;
-  height: 600px;
+#charts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 1.5rem;
+}
+
+.chart-panel {
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  width: 100%;
 }
 
 #strip {

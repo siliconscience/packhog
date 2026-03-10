@@ -45,84 +45,157 @@ async function getHourlyForecast(office, gridX, gridY) {
   return data.properties.periods;
 }
 
-function filterDayHours(periods) {
-  const days = {};
-  for (const p of periods) {
-    const start = new Date(p.startTime);
-    const hour = start.getHours();
-    if (hour < 8 || hour > 18) continue;
-    const dateKey = start.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
-    if (!days[dateKey]) days[dateKey] = [];
-    days[dateKey].push({ hour, temp: p.temperature, unit: p.temperatureUnit, short: p.shortForecast });
-  }
-  // Return as sorted array of { date, hours[] }
-  return Object.entries(days)
-    .slice(0, 7)
-    .map(([date, hours]) => ({ date, hours: hours.sort((a, b) => a.hour - b.hour) }));
+function parseWindSpeed(windSpeedStr) {
+  if (!windSpeedStr) return 0;
+  const nums = windSpeedStr.match(/\d+/g);
+  if (!nums) return 0;
+  return Math.max(...nums.map(Number));
 }
 
-function renderChart(days, name, elevation) {
-  const minTemp = Math.min(...days.flatMap(d => d.hours.map(h => h.temp)));
-  const traces = days.map((day, i) => {
-    const x = [7.983, ...day.hours.map(h => h.hour), 18.017];
-    const y = day.hours.map(() => i);
-    y.unshift(i); y.push(i);
-    const z = [minTemp, ...day.hours.map(h => h.temp), minTemp];
-    const text = day.hours.map(h => `${h.hour}:00 — ${h.temp}°${h.unit}<br>${h.short}`);
+function buildTimeSeries(periods) {
+  const TARGET_HOURS = new Set([1, 8, 12, 18]);
+  const points = [];
 
-    return {
-      type: 'scatter3d',
-      mode: 'lines+markers',
-      name: day.date,
-      x,
-      y,
-      z,
-      text,
-      hovertemplate: '%{text}<extra>%{fullData.name}</extra>',
-      line: { width: 5 },
-      marker: { size: 4 },
-      surfaceaxis: 1,
-      opacity: 0.4
-    };
-  });
+  for (const p of periods) {
+    const start = new Date(p.startTime);
+    const h = start.getHours();
+    if (!TARGET_HOURS.has(h)) continue;
 
-  // Freezing reference lines at 32°F across each day
-  const freezingTraces = days.map((day, i) => ({
-    type: 'scatter3d',
-    mode: 'lines',
-    name: '32°F',
-    showlegend: i === 0,
-    x: [8, 18],
-    y: [i, i],
-    z: [32, 32],
-    line: { color: '#000000', width: 2, /*dash: 'dot' */},
-    hoverinfo: 'skip'
-  }));
+    const day = start.toLocaleDateString('en-US', { weekday: 'short' });
+    const timeStr = h === 1 ? '1am' : h === 8 ? '8am' : h === 12 ? 'noon' : '6pm';
+    // Labels must be unique across all 28 points so use day+time
+    const label = `${day} ${timeStr}`;
 
-  const unit = days[0]?.hours[0]?.unit || 'F';
-  const elevFt = elevation ? ` — ${Math.round(elevation).toLocaleString()} m elev.` : '';
+    points.push({
+      label,
+      temp: p.temperature,
+      unit: p.temperatureUnit,
+      pop: p.probabilityOfPrecipitation?.value ?? 0,
+      wind: parseWindSpeed(p.windSpeed)
+    });
 
-  const layout = {
-    title: { text: `${name}${elevFt}`, font: { size: 16, color: '#2c3e50' } },
-    scene: {
-      xaxis: { title: 'Hour of Day', dtick: 2, range: [7, 19] },
-      yaxis: {
-        title: 'Day',
-        tickmode: 'array',
-        tickvals: days.map((_, i) => i),
-        ticktext: days.map(d => d.date)
-      },
-      zaxis: { title: `Temp (°${unit})` },
-      aspectmode: 'manual',
-      aspectratio: { x: 1.5, y: 0.8, z: 1 },
-      camera: { eye: { x: -0.95, y: -2.15, z: 0.75 } }
+    if (points.length >= 28) break;
+  }
+
+  return points;
+}
+
+function tempColor(temp, unit) {
+  const f = unit === 'C' ? temp * 9 / 5 + 32 : temp;
+  if (f <= 32) return '#5b8dd9';
+  if (f <= 50) return '#7ab3e0';
+  if (f <= 65) return '#50c878';
+  if (f <= 80) return '#f4a62a';
+  return '#e05c3a';
+}
+
+const CHART_CONFIG = { responsive: true, displayModeBar: false };
+
+function buildNightShapes(xs) {
+  const shapes = [];
+  for (let i = 0; i < xs.length; i++) {
+    if (xs[i].endsWith('6pm')) {
+      const nextMorning = xs.findIndex((l, j) => j > i && l.endsWith('8am'));
+      if (nextMorning !== -1) {
+        shapes.push({
+          type: 'rect',
+          xref: 'x', yref: 'paper',
+          x0: i,           // center of 6pm category
+          x1: nextMorning, // center of 8am category
+          y0: 0, y1: 1,
+          fillcolor: 'rgba(100,100,140,0.10)',
+          line: { width: 0 },
+          layer: 'below'
+        });
+      }
+    }
+  }
+  return shapes;
+}
+
+function baseLayout(title, yTitle, yRange) {
+  return {
+    title: { text: title, font: { size: 13, color: '#2c3e50' }, x: 0.5 },
+    paper_bgcolor: '#ffffff',
+    plot_bgcolor: '#f9fafb',
+    margin: { l: 48, r: 15, t: 38, b: 70 },
+    height: 210,
+    xaxis: {
+      tickfont: { size: 10 },
+      fixedrange: true,
+      tickangle: -45
     },
-    margin: { l: 0, r: 0, t: 50, b: 0 },
-    paper_bgcolor: '#f4f6f8',
-    legend: { orientation: 'h', y: -0.02 }
+    yaxis: {
+      title: yTitle,
+      fixedrange: true,
+      tickfont: { size: 11 },
+      ...(yRange ? { range: yRange } : {})
+    }
   };
+}
 
-  Plotly.newPlot('chart', [...traces, ...freezingTraces], layout, { responsive: true });
+function renderCharts(points) {
+  const xs = points.map(p => p.label);
+  const unit = points[0]?.unit || 'F';
+
+  const nightShapes = buildNightShapes(xs);
+
+  // Temperature
+  const temps = points.map(p => p.temp);
+  const tempMin = Math.min(...temps);
+  const tempMax = Math.max(...temps);
+  const freezingShape = {
+    type: 'line', xref: 'paper', yref: 'y',
+    x0: 0, x1: 1, y0: 32, y1: 32,
+    line: { color: '#5b8dd9', width: 1, dash: 'dot' }
+  };
+  Plotly.newPlot('chart-temp', [{
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: xs,
+    y: temps,
+    line: { color: '#d4603a', width: 2 },
+    marker: { color: points.map(p => tempColor(p.temp, p.unit)), size: 7, line: { color: '#fff', width: 1 } },
+    hovertemplate: '%{x}<br>%{y}°' + unit + '<extra></extra>'
+  }], {
+    ...baseLayout('Temperature', `°${unit}`, [tempMin - 8, tempMax + 8]),
+    shapes: [...nightShapes, ...(unit === 'F' ? [freezingShape] : [])]
+  }, CHART_CONFIG);
+
+  // PoP
+  const pops = points.map(p => p.pop);
+  Plotly.newPlot('chart-pop', [{
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: xs,
+    y: pops,
+    line: { color: '#4a90d9', width: 2 },
+    marker: { color: '#4a90d9', size: 6, line: { color: '#fff', width: 1 } },
+    fill: 'tozeroy',
+    fillcolor: 'rgba(74,144,217,0.15)',
+    hovertemplate: '%{x}<br>%{y}%<extra></extra>'
+  }], {
+    ...baseLayout('Chance of Precipitation', '%', [0, 105]),
+    shapes: nightShapes
+  }, CHART_CONFIG);
+
+  // Wind
+  const winds = points.map(p => p.wind);
+  const windMax = Math.max(...winds, 5);
+  Plotly.newPlot('chart-wind', [{
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: xs,
+    y: winds,
+    line: { color: '#5a9e4b', width: 2 },
+    marker: { color: '#5a9e4b', size: 6, line: { color: '#fff', width: 1 } },
+    fill: 'tozeroy',
+    fillcolor: 'rgba(90,158,75,0.15)',
+    hovertemplate: '%{x}<br>%{y} mph<extra></extra>'
+  }], {
+    ...baseLayout('Max Wind Speed', 'mph', [0, windMax * 1.25]),
+    shapes: nightShapes
+  }, CHART_CONFIG);
 }
 
 function conditionEmoji(shortForecast, pop) {
@@ -198,27 +271,28 @@ async function search(query) {
   if (!query) return;
 
   setStatus('Geocoding location…');
-  document.getElementById('chart').innerHTML = '';
-  document.getElementById('strip').innerHTML = '';
+  ['chart-temp', 'chart-pop', 'chart-wind', 'strip'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
 
   try {
     const loc = await geocode(query);
     const displayName = loc.name + (loc.admin1 ? `, ${loc.admin1}` : '') + (loc.country ? `, ${loc.country}` : '');
-    setStatus(`Found: ${displayName} (${loc.latitude.toFixed(3)}, ${loc.longitude.toFixed(3)}, ${loc.elevation ? loc.elevation + ' m' : 'elev unknown'}). Fetching forecast…`);
+    setStatus(`Found: ${displayName} (${loc.latitude.toFixed(3)}, ${loc.longitude.toFixed(3)}). Fetching forecast…`);
 
     const points = await getNWSPoints(loc.latitude, loc.longitude);
     setStatus('Loading hourly forecast…');
 
     const periods = await getHourlyForecast(points.office, points.gridX, points.gridY);
-    const days = filterDayHours(periods);
+    const series = buildTimeSeries(periods);
 
-    if (days.length === 0) {
-      setStatus('No daytime hours (8am–6pm) found in forecast data.', true);
+    if (series.length === 0) {
+      setStatus('No matching forecast hours found.', true);
       return;
     }
 
-    setStatus(`Showing 8am–6pm temperatures for ${displayName}`);
-    renderChart(days, displayName, loc.elevation);
+    setStatus(`7-day forecast for ${displayName}`);
+    renderCharts(series);
     renderStripChart(buildStripData(periods));
   } catch (err) {
     setStatus(err.message, true);

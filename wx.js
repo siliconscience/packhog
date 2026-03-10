@@ -125,6 +125,66 @@ function renderChart(days, name, elevation) {
   Plotly.newPlot('chart', [...traces, ...freezingTraces], layout, { responsive: true });
 }
 
+function conditionEmoji(shortForecast) {
+  const s = shortForecast.toLowerCase();
+  if (s.includes('thunder')) return '⛈️';
+  if (s.includes('blizzard')) return '🌨️';
+  if (s.includes('snow') || s.includes('flurr')) return '🌨️';
+  if (s.includes('sleet') || s.includes('freezing rain') || s.includes('ice pellet')) return '🌨️';
+  if (s.includes('rain') || s.includes('shower') || s.includes('drizzle')) return '🌧️';
+  if (s.includes('fog') || s.includes('haze') || s.includes('mist')) return '🌫️';
+  if (s.includes('mostly cloudy') || s.includes('overcast')) return '☁️';
+  if (s.includes('partly cloudy') || s.includes('partly sunny') || s.includes('mostly sunny')) return '⛅';
+  if (s.includes('sunny') || s.includes('clear')) return '☀️';
+  if (s.includes('wind') || s.includes('breezy')) return '💨';
+  return '🌡️';
+}
+
+function buildStripData(periods) {
+  const TARGET_HOURS = [8, 12, 18];
+  const days = {};
+  const dayOrder = [];
+
+  for (const p of periods) {
+    const start = new Date(p.startTime);
+    const hour = start.getHours();
+    if (!TARGET_HOURS.includes(hour)) continue;
+    const dateKey = start.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+    if (!days[dateKey]) { days[dateKey] = {}; dayOrder.push(dateKey); }
+    days[dateKey][hour] = {
+      temp: p.temperature,
+      unit: p.temperatureUnit,
+      short: p.shortForecast,
+      icon: conditionEmoji(p.shortForecast)
+    };
+  }
+
+  return dayOrder.slice(0, 7).map(date => ({
+    date,
+    slots: TARGET_HOURS.map(h => days[date]?.[h] || null)
+  }));
+}
+
+function renderStripChart(stripDays) {
+  const container = document.getElementById('strip');
+  let html = '<table class="strip-chart"><thead><tr><th>Day</th><th>8 AM</th><th>Noon</th><th>6 PM</th></tr></thead><tbody>';
+
+  for (const day of stripDays) {
+    html += `<tr><td class="strip-day">${day.date}</td>`;
+    for (const slot of day.slots) {
+      if (slot) {
+        html += `<td class="strip-cell"><span class="wx-icon">${slot.icon}</span><span class="wx-temp">${slot.temp}°${slot.unit}</span><span class="wx-label">${slot.short}</span></td>`;
+      } else {
+        html += `<td class="strip-cell strip-empty">—</td>`;
+      }
+    }
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
 function setStatus(msg, isError) {
   const el = document.getElementById('status');
   el.textContent = msg;
@@ -137,6 +197,7 @@ async function search(query) {
 
   setStatus('Geocoding location…');
   document.getElementById('chart').innerHTML = '';
+  document.getElementById('strip').innerHTML = '';
 
   try {
     const loc = await geocode(query);
@@ -156,6 +217,7 @@ async function search(query) {
 
     setStatus(`Showing 8am–6pm temperatures for ${displayName}`);
     renderChart(days, displayName, loc.elevation);
+    renderStripChart(buildStripData(periods));
   } catch (err) {
     setStatus(err.message, true);
   }

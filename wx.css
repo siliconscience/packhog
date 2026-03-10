@@ -102,3 +102,98 @@ button[type="submit"]:hover {
   box-shadow: var(--shadow);
   overflow: hidden;
 }
+
+#strip {
+  margin-top: 1.5rem;
+}
+
+.strip-chart {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.strip-chart thead th {
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  text-align: center;
+}
+
+.strip-chart thead th:first-child {
+  text-align: left;
+}
+
+.strip-chart tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.strip-chart tbody tr:hover {
+  background: #eef6f0;
+}
+
+.strip-day {
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  color: var(--primary);
+  border-right: 1px solid #e0e4e8;
+}
+
+.strip-cell {
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  border-right: 1px solid #e0e4e8;
+  vertical-align: middle;
+}
+
+.strip-cell:last-child,
+.strip-day:last-child {
+  border-right: none;
+}
+
+.strip-cell {
+  display: table-cell;
+}
+
+.strip-chart td.strip-cell {
+  width: calc((100% - 6rem) / 3);
+}
+
+.wx-icon {
+  display: block;
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+
+.wx-temp {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 0.1rem;
+}
+
+.wx-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.strip-empty {
+  color: var(--muted);
+  font-size: 1.2rem;
+}

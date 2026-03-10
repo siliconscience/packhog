@@ -125,13 +125,14 @@ function renderChart(days, name, elevation) {
   Plotly.newPlot('chart', [...traces, ...freezingTraces], layout, { responsive: true });
 }
 
-function conditionEmoji(shortForecast) {
+function conditionEmoji(shortForecast, pop) {
   const s = shortForecast.toLowerCase();
-  if (s.includes('thunder')) return '⛈️';
-  if (s.includes('blizzard')) return '🌨️';
-  if (s.includes('snow') || s.includes('flurr')) return '🌨️';
-  if (s.includes('sleet') || s.includes('freezing rain') || s.includes('ice pellet')) return '🌨️';
-  if (s.includes('rain') || s.includes('shower') || s.includes('drizzle')) return '🌧️';
+  const lowPop = (pop ?? 0) < 50;
+  if (s.includes('thunder')) return lowPop ? '☁️' : '⛈️';
+  if (s.includes('blizzard')) return lowPop ? '☁️' : '🌨️';
+  if (s.includes('snow') || s.includes('flurr')) return lowPop ? '☁️' : '🌨️';
+  if (s.includes('sleet') || s.includes('freezing rain') || s.includes('ice pellet')) return lowPop ? '☁️' : '🌨️';
+  if (s.includes('rain') || s.includes('shower') || s.includes('drizzle')) return lowPop ? '☁️' : '🌧️';
   if (s.includes('fog') || s.includes('haze') || s.includes('mist')) return '🌫️';
   if (s.includes('mostly cloudy') || s.includes('overcast')) return '☁️';
   if (s.includes('partly cloudy') || s.includes('partly sunny') || s.includes('mostly sunny')) return '⛅';
@@ -151,11 +152,12 @@ function buildStripData(periods) {
     if (!TARGET_HOURS.includes(hour)) continue;
     const dateKey = start.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
     if (!days[dateKey]) { days[dateKey] = {}; dayOrder.push(dateKey); }
+    const pop = p.probabilityOfPrecipitation?.value ?? 0;
     days[dateKey][hour] = {
       temp: p.temperature,
       unit: p.temperatureUnit,
       short: p.shortForecast,
-      icon: conditionEmoji(p.shortForecast)
+      icon: conditionEmoji(p.shortForecast, pop)
     };
   }
 

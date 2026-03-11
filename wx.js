@@ -146,7 +146,7 @@ function buildNightShapes(points) {
           x0: points[i].x,
           x1: points[nextMorning].x,
           y0: 0, y1: 1,
-          fillcolor: 'rgba(100,100,140,0.10)',
+          fillcolor: 'rgba(100,100,140,0.22)',
           line: { width: 0 },
           layer: 'below'
         });
@@ -166,7 +166,7 @@ function baseLayout(title, yTitle, yRange, xaxisExtra) {
     xaxis: {
       tickfont: { size: 10 },
       fixedrange: true,
-      tickangle: 0,
+      tickangle: -45,
       ...xaxisExtra
     },
     yaxis: {
@@ -423,7 +423,7 @@ async function search(query) {
       return;
     }
 
-    setStatus(`7-day forecast for ${displayName}`);
+    setStatus(`7-day forecast for ${displayName} — times shown: 8am, 10am, noon, 2pm, 4pm, 6pm, 8pm, 1am`);
     renderCharts(series);
     renderStripChart(buildStripData(periods));
   } catch (err) {

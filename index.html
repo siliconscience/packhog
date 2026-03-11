@@ -1,73 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PackHog Visual Packing List</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <style>
-        :root { --bg-color: #f0f2f5; --primary: #2c3e50; --accent: #27ae60; --card-bg: #ffffff; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--primary); }
-        .header-row { display: flex; align-items: baseline; gap: 15px; margin-bottom: 10px; width: 100%; max-width: 800px; }
-        h1 { margin: 0; font-size: 1.5rem; }
-        #summary-stats { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
-        .config-panel { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; width: 100%; max-width: 800px; box-sizing: border-box; }
-        .category-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        .category-table th { text-align: left; padding: 4px; border-bottom: 2px solid #eee; }
-        .category-table td { padding: 2px; vertical-align: top; }
+    <link rel="stylesheet" href="index-styles.css">
 
-.cell-content {
-    display: flex;
-    align-items: center;
-    gap: 4px; /* Space between checkbox and button */
-    white-space: nowrap; /* Prevents the text from wrapping to a new line */
-    width: 100%;
-}
-
-.tab-btn {
-    flex-grow: 1; /* Makes the button fill the rest of the cell width */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Adds "..." if the text is somehow still too long */
-    padding: 6px 8px;
-    font-size: 0.85em;
-    border: none;
-    background: #eee;
-    border-radius: 6px;
-    cursor: pointer;
-    text-align: left;
-}
-
-.category-table td {
-    padding: 2px 4px; /* Tighter padding to save space */
-    min-width: 120px; /* Ensures the column is wide enough for the pair */
-}
-
-	.tab-btn:hover { background: #e0e0e0; }
-	.tab-btn.active { background: var(--primary); color: white; }
-
-
-        .tab-btn input[type="checkbox"] { cursor: pointer; margin: 0; }
-        .controls { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-        .btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; font-size: 0.85em; }
-        .check-all { background: var(--accent); }
-        .reset-btn { background: #7f8c8d; }
-        #content-area { width: 100%; max-width: 800px; }
-        .packing-page { display: none; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-        .packing-page.active { display: grid; }
-        .item-card { background: var(--card-bg); padding: 8px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .item-card.hidden { display: none !important; }
-        .img-container { width: 100%; height: 90px; background: #f8f9fa; border-radius: 4px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #eee; font-size: 0.7em; }
-        .img-container img { width: 100%; height: 100%; object-fit: cover; }
-        #undo-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; border: none; cursor: pointer; display: none; z-index: 100; }
-    </style>
 </head>
 <body>
 
     <div class="header-row">
         <h1>PackHog List</h1>
         <div id="summary-stats">0 Items Remaining</div>
-	<span><a href="netc-mobile.html" style="color: var(--accent); font-weight: bold; font-size: 1.1rem; text-decoration: none;">[Jump to NETC page]</a></span>
-	<span><a href="wx.html" style="color: var(--accent); font-weight: bold; font-size: 1.1rem; text-decoration: none;">[Jump to Weather page]</a></span>
+	<span><a href="netc-mobile.html" style="color: var(--accent); font-weight: bold; font-size: 1.1rem; text-decoration: none;">[NETC page->]</a></span>
+	<span><a href="wx.html" style="color: var(--accent); font-weight: bold; font-size: 1.1rem; text-decoration: none;">[Weather page->]</a></span>
     </div>
 
     <div class="config-panel">

@@ -61,7 +61,7 @@ function buildSkyCoverMap(skyCoverValues) {
     const start = new Date(startStr);
     for (let i = 0; i < hours; i++) {
       const key = new Date(start.getTime() + i * 3600000).toISOString().slice(0, 13);
-      map[key] = value ?? 0;
+	map[key] = value ?? 0;
     }
   }
   return map;
@@ -116,7 +116,7 @@ function tempColor(temp, unit) {
   return '#e05c3a';
 }
 
-const CHART_CONFIG = { responsive: true, displayModeBar: false };
+const CHART_CONFIG = { responsive: true, displayModeBar: false};
 
 function buildNightShapes(points) {
   const shapes = [];
@@ -145,7 +145,7 @@ function baseLayout(title, yTitle, yRange, xaxisExtra) {
     title: { text: title, font: { size: 13, color: '#2c3e50' }, x: 0.5 },
     paper_bgcolor: '#ffffff',
     plot_bgcolor: '#f9fafb',
-    margin: { l: 48, r: 15, t: 38, b: 70 },
+    margin: { l: 55, r: 15, t: 38, b: 70 },
     height: 210,
     xaxis: {
       tickfont: { size: 10 },
@@ -156,6 +156,7 @@ function baseLayout(title, yTitle, yRange, xaxisExtra) {
     yaxis: {
       title: yTitle,
       fixedrange: true,
+      automargin: false,
       tickfont: { size: 11 },
       ...(yRange ? { range: yRange } : {})
     }
@@ -171,13 +172,15 @@ function renderCharts(points) {
   const labeled = points.filter(p => p.showLabel);
   const xTicks = {
     tickvals: labeled.map(p => p.x),
-    ticktext: labeled.map(p => p.label)
+    ticktext: labeled.map(p => p.label),
+    range: [xs[0] - 0.5, xs[xs.length - 1] + 0.5]
   };
 
   const nightShapes = buildNightShapes(points);
 
   // Temperature
-  const temps = points.map(p => p.temp);
+    const temps = points.map(p => p.temp);
+    console.log("there are "+temps.length+" temp points")
   const tempMin = Math.min(...temps);
   const tempMax = Math.max(...temps);
   const freezingShape = {
@@ -200,45 +203,38 @@ function renderCharts(points) {
   }, CHART_CONFIG);
 
   // PoP + Clear Sky bars
-  const pops = points.map(p => p.pop);
+    const pops = points.map(p => p.pop);
+    console.log("there are "+pops.length+" pop points")
   const hasCloud = points.some(p => p.skyCover !== null);
 
   const popTraces = [];
   if (hasCloud) {
     const NIGHT_HOURS = new Set([18, 20, 1]);
-    const dayXs = [], dayBases = [], dayHeights = [], dayLabels = [];
-    const nightXs = [], nightBases = [], nightHeights = [], nightLabels = [];
-
-    for (const p of points) {
-      if (p.skyCover === null) continue;
-      const clearPct = 100 - p.skyCover;
-      if (NIGHT_HOURS.has(p.hour)) {
-        nightXs.push(p.x); nightBases.push(p.skyCover);
-        nightHeights.push(clearPct); nightLabels.push(p.label);
-      } else {
-        dayXs.push(p.x); dayBases.push(p.skyCover);
-        dayHeights.push(clearPct); dayLabels.push(p.label);
-      }
-    }
-
-    // Day: yellow bars (fill from cloud% up to 100 = sunshine area)
+    // Sky cover line (drawn first, acts as lower bound for fill)
     popTraces.push({
-      type: 'bar',
-      x: dayXs, y: dayHeights, base: dayBases, width: 1,
-      name: 'Clear sky', legendgroup: 'clearsky',
-      marker: { color: 'rgba(255,210,0,0.40)', line: { width: 0 } },
-      customdata: dayLabels,
-      hovertemplate: '%{customdata}<br>Clear: %{y}%<extra></extra>'
+      type: 'scatter',
+      mode: 'lines+markers',
+      x: xs,
+      y: points.map(p => p.skyCover),
+      text: labels,
+      line: { color: 'rgba(180,150,0,0.5)', width: 2 },
+      marker: {
+        color: points.map(p => NIGHT_HOURS.has(p.hour) ? '#191970' : '#ffd200'),
+        size: 6,
+        line: { color: '#888', width: 1 }
+      },
+      hovertemplate: '%{text}<br>Cloud cover: %{y}%<extra></extra>'
     });
-
-    // Night: indigo bars
+    // Invisible ceiling — fills downward to sky cover line
     popTraces.push({
-      type: 'bar',
-      x: nightXs, y: nightHeights, base: nightBases, width: 1,
-      name: 'Clear sky', legendgroup: 'clearsky', showlegend: false,
-      marker: { color: 'rgba(75,0,130,0.28)', line: { width: 0 } },
-      customdata: nightLabels,
-      hovertemplate: '%{customdata}<br>Clear: %{y}%<extra></extra>'
+      type: 'scatter',
+      mode: 'none',
+      x: xs,
+      y: xs.map(() => 100),
+      fill: 'tonexty',
+      fillcolor: 'rgba(255,210,0,0.35)',
+      showlegend: false,
+      hoverinfo: 'skip'
     });
   }
 
@@ -255,13 +251,14 @@ function renderCharts(points) {
   });
   Plotly.newPlot('chart-pop', popTraces, {
     ...baseLayout('Chance of Precipitation & Cloud Cover', '%', [0, 105], xTicks),
-    barmode: 'overlay',
-    shapes: nightShapes
+    shapes: nightShapes,
+    showlegend: false,
   }, CHART_CONFIG);
 
   // Wind
-  const winds = points.map(p => p.wind);
-  const windMax = Math.max(...winds, 5);
+    const winds = points.map(p => p.wind);
+    console.log("There are "+winds.length+" wind points")
+  const windMax = Math.max(...winds, 10);
   Plotly.newPlot('chart-wind', [{
     type: 'scatter',
     mode: 'lines+markers',
@@ -368,6 +365,8 @@ async function search(query) {
       getHourlyForecast(points.office, points.gridX, points.gridY),
       getGridpointData(points.office, points.gridX, points.gridY).catch(() => null)
     ]);
+      console.log("periods are "+periods)
+      console.log("periods 0 is "+JSON.stringify( periods[0]))
     const skyCoverMap = gridData?.skyCover?.values
       ? buildSkyCoverMap(gridData.skyCover.values)
       : null;

@@ -199,43 +199,53 @@ function renderCharts(points) {
     shapes: [...nightShapes, ...(unit === 'F' ? [freezingShape] : [])]
   }, CHART_CONFIG);
 
-  // PoP + Cloud Cover
+  // PoP + Clear Sky bars
   const pops = points.map(p => p.pop);
-  const clouds = points.map(p => p.skyCover);
-  const hasCloud = clouds.some(v => v !== null);
+  const hasCloud = points.some(p => p.skyCover !== null);
 
   const popTraces = [];
   if (hasCloud) {
-    // Invisible top boundary at y=100; tonexty on the next trace fills UP to this
+    const NIGHT_HOURS = new Set([18, 20, 1]);
+    const dayXs = [], dayBases = [], dayHeights = [], dayLabels = [];
+    const nightXs = [], nightBases = [], nightHeights = [], nightLabels = [];
+
+    for (const p of points) {
+      if (p.skyCover === null) continue;
+      const clearPct = 100 - p.skyCover;
+      if (NIGHT_HOURS.has(p.hour)) {
+        nightXs.push(p.x); nightBases.push(p.skyCover);
+        nightHeights.push(clearPct); nightLabels.push(p.label);
+      } else {
+        dayXs.push(p.x); dayBases.push(p.skyCover);
+        dayHeights.push(clearPct); dayLabels.push(p.label);
+      }
+    }
+
+    // Day: yellow bars (fill from cloud% up to 100 = sunshine area)
     popTraces.push({
-      type: 'scatter',
-      mode: 'lines',
-      x: xs,
-      y: xs.map(() => 100),
-      line: { color: 'rgba(0,0,0,0)', width: 0 },
-      showlegend: false,
-      hoverinfo: 'skip'
+      type: 'bar',
+      x: dayXs, y: dayHeights, base: dayBases, width: 1,
+      name: 'Clear sky', legendgroup: 'clearsky',
+      marker: { color: 'rgba(255,210,0,0.40)', line: { width: 0 } },
+      customdata: dayLabels,
+      hovertemplate: '%{customdata}<br>Clear: %{y}%<extra></extra>'
     });
-    // Cloud cover line — fill='tonexty' fills from cloud% UP to 100 (sunshine area in yellow)
+
+    // Night: indigo bars
     popTraces.push({
-      type: 'scatter',
-      mode: 'lines',
-      x: xs,
-      y: clouds,
-      text: labels,
-      name: 'Cloud Cover',
-      line: { color: 'rgba(200,170,0,0.6)', width: 1.5 },
-      fill: 'tonexty',
-      fillcolor: 'rgba(255,215,0,0.30)',
-      hovertemplate: '%{text}<br>Cloud: %{y}%<extra></extra>'
+      type: 'bar',
+      x: nightXs, y: nightHeights, base: nightBases, width: 1,
+      name: 'Clear sky', legendgroup: 'clearsky', showlegend: false,
+      marker: { color: 'rgba(75,0,130,0.28)', line: { width: 0 } },
+      customdata: nightLabels,
+      hovertemplate: '%{customdata}<br>Clear: %{y}%<extra></extra>'
     });
   }
+
   popTraces.push({
     type: 'scatter',
     mode: 'lines+markers',
-    x: xs,
-    y: pops,
-    text: labels,
+    x: xs, y: pops, text: labels,
     name: 'PoP',
     line: { color: '#4a90d9', width: 2 },
     marker: { color: '#4a90d9', size: 6, line: { color: '#fff', width: 1 } },
@@ -245,6 +255,7 @@ function renderCharts(points) {
   });
   Plotly.newPlot('chart-pop', popTraces, {
     ...baseLayout('Chance of Precipitation & Cloud Cover', '%', [0, 105], xTicks),
+    barmode: 'overlay',
     shapes: nightShapes
   }, CHART_CONFIG);
 

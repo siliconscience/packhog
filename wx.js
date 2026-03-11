@@ -53,15 +53,15 @@ async function getGridpointData(office, gridX, gridY) {
   return data.properties;
 }
 
-function buildSkyCoverMap(skyCoverValues) {
+function buildHourlyMap(values, transform = v => v) {
   const map = {};
-  for (const { validTime, value } of skyCoverValues) {
+  for (const { validTime, value } of values) {
     const [startStr, durationStr] = validTime.split('/');
     const hours = parseInt((durationStr.match(/PT(\d+)H/) || [, '1'])[1]);
     const start = new Date(startStr);
     for (let i = 0; i < hours; i++) {
       const key = new Date(start.getTime() + i * 3600000).toISOString().slice(0, 13);
-	map[key] = value ?? 0;
+      map[key] = value !== null ? transform(value) : null;
     }
   }
   return map;
@@ -74,7 +74,7 @@ function parseWindSpeed(windSpeedStr) {
   return Math.max(...nums.map(Number));
 }
 
-function buildTimeSeries(periods, skyCoverMap) {
+function buildTimeSeries(periods, skyCoverMap, gustMap) {
   const TARGET_HOURS = new Set([8, 10, 12, 14, 16, 18, 20, 1]);
   const LABEL_HOURS = new Set([8, 12, 18]);
   const TIME_STRS = { 1: '1am', 8: '8am', 10: '10am', 12: 'noon', 14: '2pm', 16: '4pm', 18: '6pm', 20: '8pm' };
@@ -98,6 +98,8 @@ function buildTimeSeries(periods, skyCoverMap) {
       unit: p.temperatureUnit,
       pop: p.probabilityOfPrecipitation?.value ?? 0,
       wind: parseWindSpeed(p.windSpeed),
+      gust: gustMap ? (gustMap[utcKey] ?? 0) : 0,
+      windDir: p.windDirection || '',
       skyCover: skyCoverMap ? (skyCoverMap[utcKey] ?? null) : null
     });
 
@@ -117,6 +119,20 @@ function tempColor(temp, unit) {
 }
 
 const CHART_CONFIG = { responsive: true, displayModeBar: false};
+
+function windDirArrow(dir) {
+  switch ((dir || '').toUpperCase()) {
+    case 'N':                       return '↓';
+    case 'NNE': case 'NE': case 'ENE': return '↙';
+    case 'E':                       return '←';
+    case 'ESE': case 'SE': case 'SSE': return '↖';
+    case 'S':                       return '↑';
+    case 'SSW': case 'SW': case 'WSW': return '↗';
+    case 'W':                       return '→';
+    case 'WNW': case 'NW': case 'NNW': return '↘';
+    default:                        return '';
+  }
+}
 
 function buildNightShapes(points) {
   const shapes = [];
@@ -150,7 +166,7 @@ function baseLayout(title, yTitle, yRange, xaxisExtra) {
     xaxis: {
       tickfont: { size: 10 },
       fixedrange: true,
-      tickangle: -45,
+      tickangle: 0,
       ...xaxisExtra
     },
     yaxis: {
@@ -168,8 +184,8 @@ function renderCharts(points) {
   const labels = points.map(p => p.label); // for hover tooltips
   const unit = points[0]?.unit || 'F';
 
-  // Only label 8am, noon, 6pm on the x-axis
-  const labeled = points.filter(p => p.showLabel);
+  // One label per day at noon
+  const labeled = points.filter(p => p.hour === 12);
   const xTicks = {
     tickvals: labeled.map(p => p.x),
     ticktext: labeled.map(p => p.label),
@@ -257,22 +273,49 @@ function renderCharts(points) {
 
   // Wind
     const winds = points.map(p => p.wind);
+    const gusts = points.map(p => p.gust);
     console.log("There are "+winds.length+" wind points")
-  const windMax = Math.max(...winds, 10);
-  Plotly.newPlot('chart-wind', [{
+  const hasGusts = gusts.some(g => g > 0);
+  const windMax = Math.max(...winds, ...(hasGusts ? gusts : []), 10);
+  const windTraces = [
+  {
     type: 'scatter',
     mode: 'lines+markers',
     x: xs,
     y: winds,
-    text: labels,
+    text: points.map((p, i) => `${p.label}<br>${p.wind} mph${hasGusts && p.gust > 0 ? ` (gusts ${p.gust})` : ''}`),
     line: { color: '#5a9e4b', width: 2 },
     marker: { color: '#5a9e4b', size: 6, line: { color: '#fff', width: 1 } },
     fill: 'tozeroy',
     fillcolor: 'rgba(90,158,75,0.15)',
-    hovertemplate: '%{text}<br>%{y} mph<extra></extra>'
-  }], {
+    hovertemplate: '%{text}<extra></extra>'
+  }];
+  if (hasGusts) {
+    windTraces.push({
+      type: 'scatter',
+      mode: 'lines+markers',
+      x: xs,
+      y: gusts.map(g => g > 0 ? g : null),
+      line: { color: '#5a9e4b', width: 1.5, dash: 'dot' },
+      marker: { color: '#5a9e4b', size: 4 },
+      showlegend: false,
+      hoverinfo: 'skip'
+    });
+  }
+  windTraces.push({
+    type: 'scatter',
+    mode: 'text',
+    x: xs,
+    y: winds.map(w => w + windMax * 0.09),
+    text: points.map(p => windDirArrow(p.windDir)),
+    textfont: { size: 13, color: '#3a6e2e' },
+    showlegend: false,
+    hoverinfo: 'skip'
+  });
+  Plotly.newPlot('chart-wind', windTraces, {
     ...baseLayout('Max Wind Speed', 'mph', [0, windMax * 1.25], xTicks),
-    shapes: nightShapes
+    shapes: nightShapes,
+    showlegend: false,
   }, CHART_CONFIG);
 }
 
@@ -368,9 +411,12 @@ async function search(query) {
       console.log("periods are "+periods)
       console.log("periods 0 is "+JSON.stringify( periods[0]))
     const skyCoverMap = gridData?.skyCover?.values
-      ? buildSkyCoverMap(gridData.skyCover.values)
+      ? buildHourlyMap(gridData.skyCover.values)
       : null;
-    const series = buildTimeSeries(periods, skyCoverMap);
+    const gustMap = gridData?.windGust?.values
+      ? buildHourlyMap(gridData.windGust.values, v => Math.round(v * 0.621371))
+      : null;
+    const series = buildTimeSeries(periods, skyCoverMap, gustMap);
 
     if (series.length === 0) {
       setStatus('No matching forecast hours found.', true);

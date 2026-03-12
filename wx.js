@@ -196,7 +196,6 @@ function renderCharts(points) {
 
   // Temperature
     const temps = points.map(p => p.temp);
-    console.log("there are "+temps.length+" temp points")
   const tempMin = Math.min(...temps);
   const tempMax = Math.max(...temps);
   const freezingShape = {
@@ -220,7 +219,6 @@ function renderCharts(points) {
 
   // PoP + Clear Sky bars
     const pops = points.map(p => p.pop);
-    console.log("there are "+pops.length+" pop points")
   const hasCloud = points.some(p => p.skyCover !== null);
 
   const popTraces = [];
@@ -274,7 +272,6 @@ function renderCharts(points) {
   // Wind
     const winds = points.map(p => p.wind);
     const gusts = points.map(p => p.gust);
-    console.log("There are "+winds.length+" wind points")
   const hasGusts = gusts.some(g => g > 0);
   const windMax = Math.max(...winds, ...(hasGusts ? gusts : []), 10);
   const windTraces = [
@@ -408,8 +405,6 @@ async function search(query) {
       getHourlyForecast(points.office, points.gridX, points.gridY),
       getGridpointData(points.office, points.gridX, points.gridY).catch(() => null)
     ]);
-      console.log("periods are "+periods)
-      console.log("periods 0 is "+JSON.stringify( periods[0]))
     const skyCoverMap = gridData?.skyCover?.values
       ? buildHourlyMap(gridData.skyCover.values)
       : null;

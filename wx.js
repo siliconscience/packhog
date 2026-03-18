@@ -418,7 +418,32 @@ async function search(query) {
       return;
     }
 
-    setStatus(`7-day forecast for ${displayName} — times shown: 8am, 10am, noon, 2pm, 4pm, 6pm, 8pm, 1am`);
+    let elevStr = '';
+    if (gridData?.elevation?.value != null) {
+      const elevM = gridData.elevation.value;
+      const elevFt = Math.round(elevM * 3.28084);
+      elevStr = `, ${elevFt.toLocaleString()} ft (${Math.round(elevM).toLocaleString()} m)`;
+    }
+    const coordStr = `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}${elevStr}`;
+    const nwsUrl = `https://forecast.weather.gov/MapClick.php?lat=${loc.latitude.toFixed(4)}&lon=${loc.longitude.toFixed(4)}&FcstType=graphical`;
+
+    const statusEl = document.getElementById('status');
+    statusEl.className = '';
+    statusEl.innerHTML = '';
+    const line1 = document.createElement('span');
+    line1.textContent = `${displayName} — ${coordStr}`;
+    const line2 = document.createElement('span');
+    line2.textContent = 'Times shown: 8am, 10am, noon, 2pm, 4pm, 6pm, 8pm, 1am';
+    const line3 = document.createElement('a');
+    line3.href = nwsUrl;
+    line3.target = '_blank';
+    line3.rel = 'noopener';
+    line3.textContent = 'NWS graphical hourly forecast ↗';
+    [line1, line2, line3].forEach(el => {
+      statusEl.appendChild(el);
+      statusEl.appendChild(document.createElement('br'));
+    });
+
     renderCharts(series);
     renderStripChart(buildStripData(periods));
   } catch (err) {

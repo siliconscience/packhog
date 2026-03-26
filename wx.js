@@ -224,12 +224,12 @@ function renderCharts(points) {
   const popTraces = [];
   if (hasCloud) {
     const NIGHT_HOURS = new Set([18, 20, 1]);
-    // Sky cover line (drawn first, acts as lower bound for fill)
+    // Sunshine line at (100 - skyCover), fills upward from 0
     popTraces.push({
       type: 'scatter',
       mode: 'lines+markers',
       x: xs,
-      y: points.map(p => p.skyCover),
+      y: points.map(p => p.skyCover !== null ? 100 - p.skyCover : null),
       text: labels,
       line: { color: 'rgba(180,150,0,0.5)', width: 2 },
       marker: {
@@ -237,31 +237,35 @@ function renderCharts(points) {
         size: 6,
         line: { color: '#888', width: 1 }
       },
-      hovertemplate: '%{text}<br>Cloud cover: %{y}%<extra></extra>'
-    });
-    // Invisible ceiling — fills downward to sky cover line
-    popTraces.push({
-      type: 'scatter',
-      mode: 'none',
-      x: xs,
-      y: xs.map(() => 100),
-      fill: 'tonexty',
+      fill: 'tozeroy',
       fillcolor: 'rgba(255,210,0,0.35)',
-      showlegend: false,
-      hoverinfo: 'skip'
+      hovertemplate: '%{text}<br>Sunshine: %{y}%<extra></extra>'
     });
   }
 
+  // PoP line at (100 - pop), drawn at the lower edge of the blue region
   popTraces.push({
     type: 'scatter',
     mode: 'lines+markers',
-    x: xs, y: pops, text: labels,
+    x: xs,
+    y: pops.map(p => 100 - p),
+    customdata: pops,
+    text: labels,
     name: 'PoP',
     line: { color: '#4a90d9', width: 2 },
     marker: { color: '#4a90d9', size: 6, line: { color: '#fff', width: 1 } },
-    fill: 'tozeroy',
+    hovertemplate: '%{text}<br>PoP: %{customdata}%<extra></extra>'
+  });
+  // Invisible ceiling at 100 — fills downward to PoP line
+  popTraces.push({
+    type: 'scatter',
+    mode: 'none',
+    x: xs,
+    y: xs.map(() => 100),
+    fill: 'tonexty',
     fillcolor: 'rgba(74,144,217,0.20)',
-    hovertemplate: '%{text}<br>PoP: %{y}%<extra></extra>'
+    showlegend: false,
+    hoverinfo: 'skip'
   });
   Plotly.newPlot('chart-pop', popTraces, {
     ...baseLayout('Chance of Precipitation & Cloud Cover', '%', [0, 105], xTicks),

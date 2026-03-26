@@ -1,6 +1,9 @@
         :root { --bg-color: #f0f2f5; --primary: #2c3e50; --accent: #27ae60; --card-bg: #ffffff; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--primary); }
-        .header-row { display: flex; align-items: baseline; gap: 15px; margin-bottom: 10px; width: 100%; max-width: 800px; }
+        .header-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; width: 100%; max-width: 800px; }
+        .quick-links { display: flex; gap: 6px; margin-left: auto; }
+        .quick-links a { padding: 4px 10px; border-radius: 14px; background: rgba(39,174,96,0.12); color: var(--accent); border: 1px solid rgba(39,174,96,0.35); text-decoration: none; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+        .quick-links a:hover { background: rgba(39,174,96,0.25); }
         h1 { margin: 0; font-size: 1.5rem; }
         #summary-stats { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
         .config-panel { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; width: 100%; max-width: 800px; box-sizing: border-box; }

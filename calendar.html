@@ -57,6 +57,7 @@ body { font-family: -apple-system, sans-serif; padding: 20px; }
 <div class="no-print">
     <strong>Trip Calendar Generator</strong><br><br>
     Start: <input type="date" id="start">
+    Weeks: <input type="number" id="weeks" min="1" max="52" style="width:60px" placeholder="#">
     End: <input type="date" id="end">
     <button onclick="makeCalendar()">Generate Grid</button>
     <button onclick="window.print()">Print / Save as PDF</button>
@@ -144,8 +145,23 @@ function clearCalendarColors() {
 
   function makeCalendar() {
       const sVal = document.getElementById('start').value;
-      const eVal = document.getElementById('end').value;
-      if(!sVal || !eVal) return alert("Select dates first!");
+      if (!sVal) return alert("Select a start date!");
+
+      const weeksVal = document.getElementById('weeks').value.trim();
+      let eVal = document.getElementById('end').value;
+
+      if (weeksVal !== '') {
+          const w = parseInt(weeksVal);
+          if (!isNaN(w) && w > 0) {
+              const s = new Date(sVal + 'T00:00:00');
+              const e = new Date(s);
+              e.setDate(s.getDate() + w * 7 - 1);
+              eVal = e.toISOString().slice(0, 10);
+              document.getElementById('end').value = eVal;
+          }
+      }
+
+      if (!eVal) return alert("Enter an end date or number of weeks!");
 
       let startDate = new Date(sVal + 'T00:00:00');
       let endDate = new Date(eVal + 'T00:00:00');
@@ -179,59 +195,64 @@ function clearCalendarColors() {
       html += '</tr></table>';
       document.getElementById('output').innerHTML = html;
 
+      const numWeeks = Math.round((calEnd - calStart) / (7 * 24 * 3600 * 1000)) + 1;
+      const printHeight = numWeeks > 8 ? '0.45in' : numWeeks > 5 ? '0.65in' : '1.3in';
+      let styleEl = document.getElementById('print-height-style');
+      if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'print-height-style';
+          document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = `@media print { td { height: ${printHeight} !important; } }`;
+
       initCalendarInteraction()
 
   }
       
 
-  let isDragging = false;
-  let selectedDays = [];
-
   // Initialize the dragging listeners
   function initCalendarInteraction() {
       const grid = document.getElementById('calendar-grid');
       const picker = document.getElementById('hidden-color-picker');
+      let startDay = null;
+      let endDay = null;
 
       grid.addEventListener('mousedown', (e) => {
           const day = e.target.closest('.calendar-day');
           if (day) {
-              isDragging = true;
-              selectedDays = [day];
-              day.classList.add('selected');
-              // Prevent browser from trying to "drag" the text/element
+              startDay = day;
+              endDay = day;
               e.preventDefault();
           }
       });
 
       grid.addEventListener('mouseover', (e) => {
-          if (isDragging) {
+          if (startDay) {
               const day = e.target.closest('.calendar-day');
-              if (day && !selectedDays.includes(day)) {
-                  selectedDays.push(day);
-                  day.classList.add('selected');
-              }
+              if (day) endDay = day;
           }
       });
 
       window.addEventListener('mouseup', () => {
-          if (isDragging) {
-              isDragging = false;
-              if (selectedDays.length > 0) {
-                  // Open the color picker
-                  picker.click();
-                  
-                  // When user picks a color
-                  picker.oninput = (e) => {
-                      const color = e.target.value;
-                      selectedDays.forEach(day => {
-                          day.style.backgroundColor = color;
-                          // Contrast check for text color
-                          day.style.color = getContrastYIQ(color);
-                          day.classList.remove('selected');
-                      });
-                      saveCalendar(); // Call your save function here
-                  };
-              }
+          if (!startDay) return;
+
+          const allDays = Array.from(document.querySelectorAll('.calendar-day'));
+          const lo = Math.min(allDays.indexOf(startDay), allDays.indexOf(endDay));
+          const hi = Math.max(allDays.indexOf(startDay), allDays.indexOf(endDay));
+          const selected = allDays.slice(lo, hi + 1);
+          startDay = null;
+          endDay = null;
+
+          if (selected.length > 0) {
+              picker.click();
+              picker.oninput = (e) => {
+                  const color = e.target.value;
+                  selected.forEach(day => {
+                      day.style.backgroundColor = color;
+                      day.style.color = getContrastYIQ(color);
+                  });
+                  saveCalendar();
+              };
           }
       });
   }
@@ -258,7 +279,7 @@ function getContrastYIQ(hexcolor){
     return (yiq >= 128) ? 'black' : 'white';
 }
 
-  
+  document.getElementById('start').value = new Date().toISOString().slice(0, 10);
 </script>
 
 </body>

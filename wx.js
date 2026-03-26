@@ -100,7 +100,8 @@ function buildTimeSeries(periods, skyCoverMap, gustMap) {
       wind: parseWindSpeed(p.windSpeed),
       gust: gustMap ? (gustMap[utcKey] ?? 0) : 0,
       windDir: p.windDirection || '',
-      skyCover: skyCoverMap ? (skyCoverMap[utcKey] ?? null) : null
+      skyCover: skyCoverMap ? (skyCoverMap[utcKey] ?? null) : null,
+      shortForecast: p.shortForecast || ''
     });
 
     if (points.length >= 56) break; // 7 days × 8 points
@@ -243,7 +244,29 @@ function renderCharts(points) {
     });
   }
 
-  // PoP line at (100 - pop), drawn at the lower edge of the blue region
+  // Colored fill bars (100-pop → 100), rain=blue, snow=magenta
+  function isSnow(forecast) {
+    const s = (forecast || '').toLowerCase();
+    return s.includes('snow') || s.includes('flurr') || s.includes('blizzard') ||
+        s.includes('sleet') || s.includes('freezing rain') || s.includes('ice pellet');
+  }
+  // Rain fill
+  popTraces.push({
+    type: 'bar', x: xs,
+    y: points.map((p, i) => isSnow(p.shortForecast) ? 0 : pops[i]),
+    base: points.map((p, i) => isSnow(p.shortForecast) ? 100 : 100 - pops[i]),
+    marker: { color: 'rgba(74,144,217,0.30)', line: { width: 0 } },
+    hoverinfo: 'skip', showlegend: false
+  });
+  // Snow/sleet fill
+  popTraces.push({
+    type: 'bar', x: xs,
+    y: points.map((p, i) => isSnow(p.shortForecast) ? pops[i] : 0),
+    base: points.map((p, i) => isSnow(p.shortForecast) ? 100 - pops[i] : 100),
+    marker: { color: 'rgba(200,0,200,0.30)', line: { width: 0 } },
+    hoverinfo: 'skip', showlegend: false
+  });
+  // PoP line on top
   popTraces.push({
     type: 'scatter',
     mode: 'lines+markers',
@@ -255,17 +278,6 @@ function renderCharts(points) {
     line: { color: '#4a90d9', width: 2 },
     marker: { color: '#4a90d9', size: 6, line: { color: '#fff', width: 1 } },
     hovertemplate: '%{text}<br>PoP: %{customdata}%<extra></extra>'
-  });
-  // Invisible ceiling at 100 — fills downward to PoP line
-  popTraces.push({
-    type: 'scatter',
-    mode: 'none',
-    x: xs,
-    y: xs.map(() => 100),
-    fill: 'tonexty',
-    fillcolor: 'rgba(74,144,217,0.20)',
-    showlegend: false,
-    hoverinfo: 'skip'
   });
   Plotly.newPlot('chart-pop', popTraces, {
     ...baseLayout('Chance of Precipitation & Cloud Cover', '%', [0, 105], xTicks),

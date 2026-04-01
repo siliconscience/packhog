@@ -34,7 +34,13 @@
 <body>
 
     <div class="search-area">
-        <h3 style="margin:0 0 10px 0">Peak Insight</h3>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <h3 style="margin:0; flex:1;">Peak Insight</h3>
+          <nav style="display:flex; gap:6px;">
+            <a href="index.html" style="padding:4px 10px; border-radius:14px; background:rgba(39,174,96,0.12); color:#27ae60; border:1px solid rgba(39,174,96,0.35); text-decoration:none; font-size:0.8rem; font-weight:600; white-space:nowrap;">🎒 Packing</a>
+            <a href="wx.html" style="padding:4px 10px; border-radius:14px; background:rgba(39,174,96,0.12); color:#27ae60; border:1px solid rgba(39,174,96,0.35); text-decoration:none; font-size:0.8rem; font-weight:600; white-space:nowrap;">🌤 Weather</a>
+          </nav>
+        </div>
         <input type="text" id="peakInput" placeholder="Monadnock" style="padding:8px; width:55%; font-size:16px;">
         <button onclick="runSearch()" style="padding:8px 14px; cursor:pointer; font-size:16px;">Search</button>
         <div id="status" style="margin-top:8px; font-size:0.9rem; color:#555;">Ready.</div>

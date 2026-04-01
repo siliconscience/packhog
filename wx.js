@@ -471,3 +471,19 @@ document.getElementById('search-form').addEventListener('submit', e => {
   e.preventDefault();
   search(document.getElementById('location-input').value);
 });
+
+async function autoDetect() {
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.city || !data.latitude) return;
+    const query = data.city + (data.region ? `, ${data.region}` : '');
+    document.getElementById('location-input').value = query;
+    search(query);
+  } catch (_) {
+    // silently fail — user can still search manually
+  }
+}
+
+autoDetect();
